@@ -189,7 +189,6 @@ public UUID writeNDFRTEConcept(DTSConcept con, OntylogConcept oCon, File file, O
   conceptAttributes.setPathUuid(path);
   conceptAttributes.setTime(time);
   
-  
   /** 
    * TO DO: This needs to be updated to create all concept annotations from applicable concept properties in NDFRT. Not all properties should be concept annotations.
    * For example, alternate ID properties (VUID, NUI etc...) should be entered as such.
@@ -198,26 +197,6 @@ public UUID writeNDFRTEConcept(DTSConcept con, OntylogConcept oCon, File file, O
   String [] propTypeNames = {"Level", "Class_Code", "CS_Federal_Schedule", "Severity", "Status", "Strength"};
   addProperties(conceptAttributes, con, propTypeNames);// attempt to add annotations on description
   concept.setConceptAttributes(conceptAttributes);
-  
-	// get the additional ids list of the attributes
-	List<TkIdentifier> additionalIds = conceptAttributes.additionalIds;
-	if (additionalIds == null) {
-		additionalIds = new ArrayList<TkIdentifier>();
-		conceptAttributes.additionalIds = additionalIds;
-	}
-	
-	// create the identifier and add it to the additional ids list
-	EIdentifierString cid = new EIdentifierString();
-	additionalIds.add(cid);
-	
-	// populate the identifier with the usual suspects
-	cid.setAuthorityUuid(UUID.nameUUIDFromBytes(("com.apelon.akcds:NUI").getBytes()));
-	cid.setPathUuid(path);
-	cid.setStatusUuid(currentUuid);
-	cid.setTime(System.currentTimeMillis());
-	// populate the actual value of the identifier
-	cid.setDenotation(getPropValue(con, "NUI"));
-	
   
   List<TkDescription> descriptions = new ArrayList<TkDescription>();
   TkDescription description = new TkDescription();
