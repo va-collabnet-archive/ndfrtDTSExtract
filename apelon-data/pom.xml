@@ -7,8 +7,8 @@
     <artifactId>akcds-import-parent</artifactId>
     <version>1.0-SNAPSHOT</version>
   </parent>
-  <groupId>com.apelon.akcds</groupId>
-  <artifactId>apelon-data</artifactId>
+  <groupId>com.apelon.va.ihtsdo.wb.ndfrt</groupId>
+  <artifactId>ndfrt-data</artifactId>
   <packaging>pom</packaging>
   <name>${project.parent.artifactId}: apelon data</name>
   <version>1.0-SNAPSHOT</version>
