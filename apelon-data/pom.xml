@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>com.apelon.akcds</groupId>
-    <artifactId>akcds-import-parent</artifactId>
+    <artifactId>ndfrt-import-parent</artifactId>
     <version>1.0-SNAPSHOT</version>
   </parent>
   <groupId>com.apelon.va.ihtsdo.wb.ndfrt</groupId>

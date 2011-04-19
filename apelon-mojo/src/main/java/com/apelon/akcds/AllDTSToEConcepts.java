@@ -1,33 +1,39 @@
 package com.apelon.akcds;
 
 import java.io.BufferedOutputStream;
-import java.io.BufferedWriter;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.Hashtable;
 import java.util.UUID;
 
+import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.dwfa.cement.ArchitectonicAuxiliary;
-import org.dwfa.tapi.TerminologyException;
 import org.ihtsdo.etypes.EConcept;
-import org.ihtsdo.etypes.EConceptAttributes;
-import org.ihtsdo.etypes.EIdentifierString;
 import org.ihtsdo.tk.dto.concept.component.TkComponent;
-import org.ihtsdo.tk.dto.concept.component.description.TkDescription;
-import org.ihtsdo.tk.dto.concept.component.identifier.TkIdentifier;
-import org.ihtsdo.tk.dto.concept.component.refset.TkRefsetAbstractMember;
-import org.ihtsdo.tk.dto.concept.component.refset.str.TkRefsetStrMember;
 import org.ihtsdo.tk.dto.concept.component.relationship.TkRelationship;
 
+import com.apelon.akcds.propertyTypes.PT_Attributes;
+import com.apelon.akcds.propertyTypes.PT_Descriptions;
+import com.apelon.akcds.propertyTypes.PT_IDs;
+import com.apelon.akcds.propertyTypes.PT_Qualifiers;
+import com.apelon.akcds.propertyTypes.PT_Relations;
+import com.apelon.akcds.propertyTypes.PT_Skip;
+import com.apelon.akcds.propertyTypes.PropertyType;
+import com.apelon.dts.client.DTSException;
+import com.apelon.dts.client.association.ConceptAssociation;
+import com.apelon.dts.client.association.Synonym;
 import com.apelon.dts.client.attribute.DTSProperty;
 import com.apelon.dts.client.attribute.DTSPropertyType;
+import com.apelon.dts.client.attribute.DTSQualifier;
 import com.apelon.dts.client.attribute.DTSRole;
 import com.apelon.dts.client.attribute.DTSRoleType;
 import com.apelon.dts.client.concept.ConceptAttributeSetDescriptor;
@@ -37,422 +43,524 @@ import com.apelon.dts.client.concept.OntylogConcept;
 import com.apelon.dts.client.namespace.Namespace;
 
 /**
- * Goal which touches a timestamp file.
- *
+ * 
+ * Loader code to connect to a DTS server (specified in dts_conn_params.txt) and load the entire 
+ * contents into a workbench jbin file.
+ * 
+ * Paths are typically controlled by maven, however, the main() method has paths configured so that they 
+ * match what maven does for test purposes.
+ * 
  * @goal generate-apelon-data
- *
+ * 
  * @phase process-sources
  */
-public class AllDTSToEConcepts
-extends AbstractMojo
+public class AllDTSToEConcepts extends AbstractMojo
 {
+	/**
+	 * Location of the file.
+	 * 
+	 * @parameter expression="${project.build.directory}"
+	 * @required
+	 */
+	private File outputDirectory;
+	private DataOutputStream dos_;
+	private DbConn dbConn_;
+	private EConceptUtility conceptUtility_;
 
-/**
- * Location of the file.
- * @parameter expression="${project.build.directory}"
- * @required
- */
-private File outputDirectory;
-private File touch;
-private ConceptAttributeSetDescriptor csd = ConceptAttributeSetDescriptor.ALL_ATTRIBUTES;
-public DbConn dbc;
-int conCounter = 0;
-int relCounter = 0;
-int level = 0;
-int namespace_id;
-private Namespace ns;
-private DataOutputStream dos;
-private PrintWriter out;
+	private int conCounter_ = 0;
 
-public void execute()
-    throws MojoExecutionException
-{
-    File f = outputDirectory;
-
-    if ( !f.exists() )
-    {
-        f.mkdirs();
-    }
-      touch = new File( f, "NDFRTEConcepts.jbin" );
-      try {
-    	    dbc =  new DbConn();
-    	    dbc.connectDTS();
-    	    dos = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(touch)));
-        	String curDir = System.getProperty("user.dir");
-        	File dir = new File(curDir + "\\conn");
-    		File file = new File(dir, "written-concepts.txt");
-    		OutputStreamWriter out_stream = new OutputStreamWriter(
-    				new FileOutputStream(file.getPath()), "UTF8");
-    		out = new PrintWriter(new BufferedWriter(out_stream));
-    	    namespace_id = dbc.namespace_ID;
-    	    ns = dbc.nameQuery.findNamespaceById(namespace_id);
-    	    System.out.println("***Connected to: " + dbc.user + "***");
-    	    DTSConcept rootCon = new DTSConcept("National Drug File Reference Terminology", namespace_id);
-    	    //UUID relRoot = ArchitectonicAuxiliary.Concept.RELATIONSHIP.getPrimoridalUid();
-    	    UUID archRoot = ArchitectonicAuxiliary.Concept.ARCHITECTONIC_ROOT_CONCEPT.getPrimoridalUid();
-    	    UUID rootPrimordial = writeNDFRTEConcept(rootCon, touch, null);//create root concept
-    	    conCounter++;
-    	    UUID NDFRTRelPrimordial = writeAuxEConcept(touch, "NDF-RT Relationship Types", archRoot);
-    	    UUID NDFRTPropPrimordial = writeAuxEConcept(touch, "NDF-RT Attributes Types", archRoot);
-    	    getAllRelEConceptNames(touch, NDFRTRelPrimordial);
-    	    getAllPropEConceptNames(touch, NDFRTPropPrimordial);
-    	    createAllConcepts(touch, rootPrimordial);
-    	    out.close();
-    		dos.flush();
-    		dos.close();
-      } catch (Exception ex) {
-            throw new MojoExecutionException(ex.getLocalizedMessage(), ex);
-      }
-
- }
-
-public void createAllConcepts(File file, UUID rootPrimordial) throws Exception{
-	String pattern = "*";
-	DTSSearchOptions options = new DTSSearchOptions();
-	OntylogConcept[] oCons = dbc.searchQuery.findConceptsWithNameMatching(pattern, options);//no property or role values are returned!!
-	System.out.println("# of concepts found: " + oCons.length);
-	for (int i = 0; i < oCons.length ; i++) {
-		DTSConcept dCon = dbc.ontQry.findConceptByCode(oCons[i].getCode(), namespace_id, csd);
-		OntylogConcept oCon = (OntylogConcept) dCon;
-		DTSRole[] conInferredRoles = oCon.getFetchedRoles();
-		OntylogConcept[] parentConcepts = oCon.getFetchedSuperconcepts();
-		if (parentConcepts.length == 0 && conInferredRoles.length == 0){
-			writeNDFRTEConcept(dCon, touch, rootPrimordial);
-		}
-		else {
-			writeNDFRTEConcept(dCon, oCons[i], touch, parentConcepts, conInferredRoles);	
-		}
-		conCounter++;
-		if ((conCounter % 1000) == 0) {
-			System.out.println("Processed: " + conCounter);
-			System.out.println("Wrote: " + oCons[i].getName());
-		}
-	}
-}
-
-public void getAllRelEConceptNames(File file, UUID NDFRTRelPrimordial) throws Exception{
-	DTSRoleType[] roleTypes = dbc.ontQry.getAllRoleTypes();
-	for (int i = 0; i < roleTypes.length; i++){
-		String sRoleName = roleTypes[i].getName();
-		writeAuxEConcept(file, sRoleName, NDFRTRelPrimordial);
-	}
-}
-
-public void getAllPropEConceptNames(File file, UUID NDFRTPropPrimordial) throws Exception{
-	DTSPropertyType[] propType = dbc.ontQry.getAllConceptPropertyTypes();
-	for (int i = 0; i < propType.length; i++){
-		String sPropName = propType[i].getName();
-		writeAuxEConcept(file, sPropName, NDFRTPropPrimordial);
-	}
-}
-
-public String getPropValue (DTSConcept dc, String sPropType){
-	DTSProperty [] props = dc.getFetchedProperties();
-	//System.out.println("Number of properties: " + props.length);
-	String propValue = null;
-	Boolean found = false;
-	for (int i = 0; i < props.length; i++) {
-		if (props[i].getPropertyType().getName().equals(sPropType)){
-			propValue = props[i].getValue();
-			//System.out.println("Getting Prop Value for: " + dc.getName() + "Value: " + propValue);
-			found = true;
-		}
-	}
-	if (found == false && sPropType.equals("Display_Name")){
-		propValue = dc.getName();
-	}
-	return propValue;
-}
-
-public UUID writeNDFRTEConcept(DTSConcept con, OntylogConcept oCon, File file, OntylogConcept[] parents, DTSRole[] infRoles) throws Exception
-{
-  //System.out.println("Working on concept:" + con.getName());
-  long time = System.currentTimeMillis();
-
-  UUID currentUuid = ArchitectonicAuxiliary.Concept.CURRENT.getPrimoridalUid();
-  UUID path = ArchitectonicAuxiliary.Concept.SNOMED_CORE.getPrimoridalUid();
-  UUID preferredTerm = ArchitectonicAuxiliary.Concept.PREFERRED_DESCRIPTION_TYPE.getPrimoridalUid();
-  UUID isa = ArchitectonicAuxiliary.Concept.IS_TERM_OF.getPrimoridalUid();
-  UUID author = ArchitectonicAuxiliary.Concept.USER.getPrimoridalUid();
-  UUID relPrimordial = ArchitectonicAuxiliary.Concept.IS_A_REL.getPrimoridalUid();
-
-  EConcept concept = new EConcept();
-  UUID primordial = getPrimoridalUUID(con, "NUI");
-  concept.setPrimordialUuid(primordial);
-  EConceptAttributes conceptAttributes = new EConceptAttributes();
-  conceptAttributes.setAuthorUuid(author);
-
-  conceptAttributes = new EConceptAttributes();
-  conceptAttributes.defined = false;
-  conceptAttributes.primordialUuid = primordial;
-  conceptAttributes.statusUuid = currentUuid;
-  conceptAttributes.setPathUuid(path);
-  conceptAttributes.setTime(time);
-  
-  /** 
-   * TO DO: This needs to be updated to create all concept annotations from applicable concept properties in NDFRT. Not all properties should be concept annotations.
-   * For example, alternate ID properties (VUID, NUI etc...) should be entered as such.
-   */
-  //attempt to add annotations on description
-  String [] propTypeNames = {"Level", "Class_Code", "CS_Federal_Schedule", "Severity", "Status", "Strength"};
-  addProperties(conceptAttributes, con, propTypeNames);// attempt to add annotations on description
-  concept.setConceptAttributes(conceptAttributes);
-  
-  List<TkDescription> descriptions = new ArrayList<TkDescription>();
-  TkDescription description = new TkDescription();
-  description.setConceptUuid(primordial);
-  description.setLang("en");
-  description.setPrimordialComponentUuid(UUID.randomUUID());
-
-  description.setTypeUuid(preferredTerm);
-  //System.out.println("Getting Description");
-  description.text = getPropValue(con, "Display_Name");
-  description.setStatusUuid(currentUuid);
-  description.setAuthorUuid(author);
-  description.setPathUuid(path);
-  description.setTime(time);
-  descriptions.add(description);
-  concept.setDescriptions(descriptions);
-
-  if (conCounter > 0){//create is_a hierarchical relationship
-	// get the additional ids list of the attributes
-	createAdditionalIds(con, currentUuid, path, conceptAttributes, "NUI");
-	createAdditionalIds(con, currentUuid, path, conceptAttributes, "RxNorm_CUI");
-	createAdditionalIds(con, currentUuid, path, conceptAttributes, "FDA_UNII");
-	createAdditionalIds(con, currentUuid, path, conceptAttributes, "UMLS_CUI");
-	createAdditionalIds(con, currentUuid, path, conceptAttributes, "MeSH_CUI");
-	createAdditionalIds(con, currentUuid, path, conceptAttributes, "MeSH_DUI");
-	createAdditionalIds(con, currentUuid, path, conceptAttributes, "SNOMED_CID");
-
-	  
-	List<TkRelationship> relationships = new ArrayList<TkRelationship>();
-	 for (int i = 0; i < parents.length; i++) {
-	    UUID parentPrimordial = getPrimoridalUUID(dbc.thesQuery.findConceptByCode(parents[i].getCode(), namespace_id, csd), "NUI");
-	    TkRelationship heirRel = createRelationships(concept, parentPrimordial, relPrimordial);
-		relationships.add(heirRel);
-	 }
+	private final String uuidRoot_ = "com.apelon.akcds";
 	
-    for (int i = 0; i < infRoles.length; i++) {
-    	OntylogConcept targetOCon = infRoles[i].getValueConcept();
-    	DTSConcept targetDCon = dbc.thesQuery.findConceptByName(targetOCon.getName(), namespace_id, csd);
-    	//System.out.println("concept: " + con.getName() + " target: " + targetDCon.getName());
-    	TkRelationship roleRel = createRelationships(concept, getPrimoridalUUID(targetDCon, "NUI"), UUID.nameUUIDFromBytes(("com.apelon.akcds:" + infRoles[i].getName()).getBytes()));
-    	relationships.add(roleRel);
-    }
-    
-	concept.setRelationships(relationships);
-  }
-
-  out.println("Wrote: " + concept);
-  concept.writeExternal(dos);
-  
-  return primordial;
-}
-public UUID writeNDFRTEConcept(DTSConcept con, File file, UUID parentPrimordial) throws Exception
-{
-
-   long time = System.currentTimeMillis();
-
-   UUID currentUuid = ArchitectonicAuxiliary.Concept.CURRENT.getPrimoridalUid();
-   UUID path = ArchitectonicAuxiliary.Concept.SNOMED_CORE.getPrimoridalUid();
-   UUID preferredTerm = ArchitectonicAuxiliary.Concept.PREFERRED_DESCRIPTION_TYPE.getPrimoridalUid();
-   UUID isa = ArchitectonicAuxiliary.Concept.IS_TERM_OF.getPrimoridalUid();
-   UUID author = ArchitectonicAuxiliary.Concept.USER.getPrimoridalUid();
-   UUID relPrimordial = ArchitectonicAuxiliary.Concept.IS_A_REL.getPrimoridalUid();
-
-  EConcept concept = new EConcept();
-  UUID primordial = UUID.nameUUIDFromBytes(("com.apelon.akcds:" + getPropValue(con, "NUI")).getBytes());
-  concept.setPrimordialUuid(primordial);
-  EConceptAttributes conceptAttributes = new EConceptAttributes();
-  conceptAttributes.setAuthorUuid(author);
-
-  conceptAttributes = new EConceptAttributes();
-  conceptAttributes.defined = false;
-  conceptAttributes.primordialUuid = primordial;
-  conceptAttributes.statusUuid = currentUuid;
-  conceptAttributes.setPathUuid(path);
-  conceptAttributes.setTime(time);
-  
-  
-  /** 
-   * TO DO: This needs to be updated to create all concept annotations from applicable concept properties in NDFRT. Not all properties should be concept annotations.
-   * For example, alternate ID properties (VUID, NUI etc...) should be entered as such.
-   */
-  //attempt to add annotations on description
-  String [] propTypeNames = {"Level", "Class_Code", "CS_Federal_Schedule", "Severity", "Status", "Strength"};
-  addProperties(conceptAttributes, con, propTypeNames);
-  concept.setConceptAttributes(conceptAttributes);
-
-  List<TkDescription> descriptions = new ArrayList<TkDescription>();
-  TkDescription description = new TkDescription();
-  description.setConceptUuid(primordial);
-  description.setLang("en");
-  description.setPrimordialComponentUuid(UUID.randomUUID());
-
-  description.setTypeUuid(preferredTerm);
-  //System.out.println("Getting Description");
-  description.text = getPropValue(con, "Display_Name");
-  description.setStatusUuid(currentUuid);
-  description.setAuthorUuid(author);
-  description.setPathUuid(path);
-  description.setTime(time);
-  descriptions.add(description);
-  concept.setDescriptions(descriptions);
-
-  if (conCounter > 0){
-	// get the additional ids list of the attributes
-	createAdditionalIds(con, currentUuid, path, conceptAttributes, "NUI");
-	createAdditionalIds(con, currentUuid, path, conceptAttributes, "RxNorm_CUI");
-	createAdditionalIds(con, currentUuid, path, conceptAttributes, "FDA_UNII");
-	createAdditionalIds(con, currentUuid, path, conceptAttributes, "UMLS_CUI");
-	createAdditionalIds(con, currentUuid, path, conceptAttributes, "MeSH_CUI");
-	createAdditionalIds(con, currentUuid, path, conceptAttributes, "MeSH_DUI");
-	createAdditionalIds(con, currentUuid, path, conceptAttributes, "SNOMED_CID");
-	//create is_a hierarchical relationship  
-	List<TkRelationship> relationships = new ArrayList<TkRelationship>();
-	TkRelationship heirRel = createRelationships(concept, parentPrimordial, relPrimordial);
-	relationships.add(heirRel);
-	concept.setRelationships(relationships);
-  }
-
-  out.println("Wrote: " + concept);
-  concept.writeExternal(dos);
-  
-  return primordial;
-}
-
-private void createAdditionalIds(DTSConcept con, UUID currentUuid, UUID path,
-		EConceptAttributes conceptAttributes, String propTypeName) {
- if (getPropValue(con, propTypeName) != null){
-	List<TkIdentifier> additionalIds = conceptAttributes.additionalIds;
-	if (additionalIds == null) {
-		additionalIds = new ArrayList<TkIdentifier>();
-		conceptAttributes.additionalIds = additionalIds;
-	}
+	private final ArrayList<PropertyType> propertyTypes_ = new ArrayList<PropertyType>(Arrays.asList(new PropertyType[] {
+			new PT_IDs(uuidRoot_), new PT_Attributes(uuidRoot_), new PT_Descriptions(uuidRoot_),
+			new PT_Skip(uuidRoot_) }));
 	
-	// create the identifier and add it to the additional ids list
-	EIdentifierString cid = new EIdentifierString();
-	additionalIds.add(cid);
-		
-	// populate the identifier with the usual suspects
-	cid.setAuthorityUuid(UUID.nameUUIDFromBytes(("com.apelon.akcds:" + propTypeName).getBytes()));
-	cid.setPathUuid(path);
-	cid.setStatusUuid(currentUuid);
-	cid.setTime(System.currentTimeMillis());
-	// populate the actual value of the identifier
-	cid.setDenotation(getPropValue(con, propTypeName));
- }
-}
+	//These are slightly different than the property types, have special handling - so they are not added to the propertyTypes_ list.
+	private final PT_Qualifiers qualifiers_ = new PT_Qualifiers(uuidRoot_); 
+	private final PT_Relations relations_ = new PT_Relations(uuidRoot_); 
+	
+	//Various caches for performance reasons
+	private Hashtable<String, String> codeToNUICache_ = new Hashtable<String, String>();
+	private Hashtable<String, String> nameToNUICache_ = new Hashtable<String, String>();
+	private Hashtable<String, DTSConcept> codeToDTSConceptCache_ = new Hashtable<String, DTSConcept>();
+	private Hashtable<String, PropertyType> propertyToPropertyType_ = new Hashtable<String, PropertyType>();
 
-private UUID getPrimoridalUUID(DTSConcept targetDCon, String propValue) {
-	//System.out.println("Inside getPrimordial UUID");
-	return UUID.nameUUIDFromBytes(("com.apelon.akcds:" + getPropValue(targetDCon, propValue)).getBytes());
-}
+	/**
+	 * Used for debug. Sets up the same paths that maven would use.... allow the code to be run standalone.
+	 */
+	public static void main(String[] args) throws Exception
+	{
+		BasicConfigurator.configure();
+		Logger.getRootLogger().setLevel(Level.WARN);
+		AllDTSToEConcepts ndfConverter = new AllDTSToEConcepts();
+		ndfConverter.outputDirectory = new File("../apelon-data/target/");
+		ndfConverter.execute();
+	}
 
-private List<TkRefsetAbstractMember<?>> addProperties(TkComponent<?> description, DTSConcept con, String[] propTypeNames) throws IOException, TerminologyException
-{
-	List<TkRefsetAbstractMember<?>> annotations = new ArrayList<TkRefsetAbstractMember<?>>(); 
-	for (int i = 0; i < propTypeNames.length; i++) {
-		String propValue = getPropValue(con, propTypeNames[i]);
-		if (propValue != null)
+	public void execute() throws MojoExecutionException
+	{
+		System.out.println("NDFRT Processing Begins " + new Date().toString());
+		try
 		{
-			TkRefsetStrMember strRefexMember = new TkRefsetStrMember();
-			 
-			strRefexMember.setComponentUuid(description.getPrimordialComponentUuid()); 
-			strRefexMember.setStrValue(propValue);
-			  
-			strRefexMember.setPrimordialComponentUuid(UUID.nameUUIDFromBytes(("com.apelon.akcds:property:" +
-					description.getPrimordialComponentUuid().toString() +
-					strRefexMember.getStrValue()).getBytes()));
-			  
-			strRefexMember.setRefsetUuid(UUID.nameUUIDFromBytes(("com.apelon.akcds:" + propTypeNames[i]).getBytes()));
-			  
-			strRefexMember.setStatusUuid(ArchitectonicAuxiliary.Concept.CURRENT.getPrimoridalUid());
-			strRefexMember.setAuthorUuid(ArchitectonicAuxiliary.Concept.USER.getPrimoridalUid());
-			strRefexMember.setPathUuid(ArchitectonicAuxiliary.Concept.SNOMED_CORE.getPrimoridalUid()); 
-			strRefexMember.setTime(System.currentTimeMillis());
-			annotations.add(strRefexMember);
+			//Set up the output
+			if (!outputDirectory.exists())
+			{
+				outputDirectory.mkdirs();
+			}
+
+			conceptUtility_ = new EConceptUtility(uuidRoot_);
+			File binaryOutputFile = new File(outputDirectory, "NDFRTEConcepts.jbin");
+			
+			//Connect to DTS
+			dbConn_ = new DbConn();
+			dbConn_.connectDTS(new File(new File(outputDirectory.getParentFile().getParentFile(), "conn"), "dts_conn_params.txt"));
+			dos_ = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(binaryOutputFile)));
+
+			Namespace ns = dbConn_.nameQuery.findNamespaceById(dbConn_.getNamespace());
+			System.out.println("*** Connected to: " + dbConn_.toString() + " " + ns.toString() + " ***");
+
+			System.out.println("Loading Metadata");
+			
+			DTSConcept dtsRootCon = new DTSConcept("National Drug File Reference Terminology", dbConn_.getNamespace());
+			UUID rootPrimordial = writeRootConcept(dtsRootCon, buildUUIDFromNUI(dtsRootCon));// create root concept
+			
+			UUID archRoot = ArchitectonicAuxiliary.Concept.ARCHITECTONIC_ROOT_CONCEPT.getPrimoridalUid();
+			UUID metaDataRoot = UUID.nameUUIDFromBytes((uuidRoot_ + ":metadata").getBytes());
+			writeAuxEConcept(metaDataRoot, "NDF-RT Metadata", archRoot);
+			
+			//Load the roles found in DTS into our relations structure
+			DTSRoleType[] roleTypes = dbConn_.ontQry.getAllRoleTypes();
+			for (int i = 0; i < roleTypes.length; i++)
+			{
+				relations_.addRelation(roleTypes[i].getName());
+			}
+
+			//Create metadata structures for the qualifiers and relations
+			loadMetaDataItems(qualifiers_, metaDataRoot);
+			loadMetaDataItems(relations_, metaDataRoot);
+			
+			//And for all of the other property types
+			for (PropertyType pt : propertyTypes_)
+			{
+				if (pt instanceof PT_Skip)
+				{
+					continue;
+				}
+				loadMetaDataItems(pt, metaDataRoot);
+			}
+			
+			//Load up the propertyType map for speed, perform basic sanity check
+			for (PropertyType pt : propertyTypes_)
+			{
+				for (String propertyName : pt.getPropertyNames())
+				{
+					if (propertyToPropertyType_.containsKey(propertyName))
+					{
+						System.err.println("ERROR: Two different property types each contain " + propertyName);
+					}
+					propertyToPropertyType_.put(propertyName, pt);
+				}
+			}
+			
+			//validate that we are configured to map all properties properly
+			checkForLeftoverPropertyTypes();
+			
+			System.out.println("");
+			
+			//Load the data
+			createAllConcepts(rootPrimordial);
+
+			System.out.println("");
+			System.out.println("Wrote " + conCounter_ + " EConcepts");
+			System.out.println("Wrote " + conceptUtility_.getCreatedRelCount() + " relationships");
+			System.out.println("NDFRT Processing Completes " + new Date().toString());
+		}
+		catch (Exception ex)
+		{
+			throw new MojoExecutionException(ex.getLocalizedMessage(), ex);
+		}
+		finally
+		{
+			if (dos_ != null)
+			{
+				try
+				{
+					dos_.flush();
+					dos_.close();
+				}
+				catch (IOException e)
+				{
+					throw new MojoExecutionException(e.getLocalizedMessage(), e);
+				}
+			}
 		}
 	}
-	description.setAnnotations(annotations);
-	return annotations;
-}
-
-public UUID writeAuxEConcept(File file, String name, UUID relParentPrimordial) throws Exception
-{
-   conCounter++;
-   long time = System.currentTimeMillis();
-
-   UUID currentUuid = ArchitectonicAuxiliary.Concept.CURRENT.getPrimoridalUid();
-   UUID path = ArchitectonicAuxiliary.Concept.SNOMED_CORE.getPrimoridalUid();
-   UUID preferredTerm = ArchitectonicAuxiliary.Concept.PREFERRED_DESCRIPTION_TYPE.getPrimoridalUid();
-   UUID isa = ArchitectonicAuxiliary.Concept.IS_TERM_OF.getPrimoridalUid();
-   UUID author = ArchitectonicAuxiliary.Concept.USER.getPrimoridalUid();
-   UUID relPrimordial = ArchitectonicAuxiliary.Concept.IS_A_REL.getPrimoridalUid();
-   
-
-  EConcept concept = new EConcept();
-  UUID primordial = UUID.nameUUIDFromBytes(("com.apelon.akcds:" + name).getBytes());
-  concept.setPrimordialUuid(primordial);
-  EConceptAttributes conceptAttributes = new EConceptAttributes();
-  conceptAttributes.setAuthorUuid(author);
-
-  conceptAttributes = new EConceptAttributes();
-  conceptAttributes.defined = false;
-  conceptAttributes.primordialUuid = primordial;
-  conceptAttributes.statusUuid = currentUuid;
-  conceptAttributes.setPathUuid(path);
-  conceptAttributes.setTime(time);
-  concept.setConceptAttributes(conceptAttributes);
-
-  List<TkDescription> descriptions = new ArrayList<TkDescription>();
-  TkDescription description = new TkDescription();
-  description.setConceptUuid(primordial);
-  description.setLang("en");
-  description.setPrimordialComponentUuid(UUID.randomUUID());
-
-  description.setTypeUuid(preferredTerm);
-  description.text = name;
-  description.setStatusUuid(currentUuid);
-  description.setAuthorUuid(author);
-  description.setPathUuid(path);
-  description.setTime(time);
-  descriptions.add(description);
-  concept.setDescriptions(descriptions);
-  
-  List<TkRelationship> relationships = new ArrayList<TkRelationship>();
-  TkRelationship heirRel = createRelationships(concept, relParentPrimordial, relPrimordial);
-  relationships.add(heirRel);
-  concept.setRelationships(relationships);
-
-  out.println("Wrote: " + concept);
-  concept.writeExternal(dos);
-  
-  return primordial;
-}
-
-private TkRelationship createRelationships(EConcept eConcept, UUID targetPrimordial, UUID relPrimoridal) throws IOException, TerminologyException {
-    relCounter++;
-	long time = System.currentTimeMillis();
-
-    UUID currentUuid = ArchitectonicAuxiliary.Concept.CURRENT.getPrimoridalUid();
-    UUID path = ArchitectonicAuxiliary.Concept.SNOMED_CORE.getPrimoridalUid();
-    UUID author = ArchitectonicAuxiliary.Concept.USER.getPrimoridalUid();
-    
 	
-	TkRelationship rel = new TkRelationship();
-	rel.setPrimordialComponentUuid(UUID.nameUUIDFromBytes(("com.apelon.akcds:rel"+relCounter).getBytes()));
-	rel.setC1Uuid(eConcept.getPrimordialUuid());
-	rel.setTypeUuid(relPrimoridal);
-	rel.setC2Uuid(targetPrimordial);	  
-	rel.setCharacteristicUuid(ArchitectonicAuxiliary.Concept.DEFINING_CHARACTERISTIC.getPrimoridalUid());
-	rel.setRefinabilityUuid(ArchitectonicAuxiliary.Concept.NOT_REFINABLE.getPrimoridalUid());
-	rel.setStatusUuid(currentUuid);
-	rel.setAuthorUuid(author);
-	rel.setPathUuid(path);
-	rel.setTime(time);
-	rel.setRelGroup(0);
+	/**
+	 * Create metadata EConcepts from the PropertyType structure
+	 */
+	private void loadMetaDataItems(PropertyType pt, UUID parentPrimordial) throws Exception
+	{
+		writeAuxEConcept(pt.getPropertyTypeUUID(), pt.getPropertyTypeDescription(), parentPrimordial);
+		for (String type : pt.getPropertyNames())
+		{
+			writeAuxEConcept(pt.getPropertyUUID(type), pt.getPropertyFriendlyName(type), pt.getPropertyTypeUUID());
+		}
+	}
+
+	private void createAllConcepts(UUID rootPrimordial) throws Exception
+	{
+		//Note - to do a quick (partial) load, modify this pattern and/or set a size limit on the options object.
+		//The hack code at the end of this class will fix any broken tree that is a result of the partial load.
+		String pattern = "*";   
+		DTSSearchOptions options = new DTSSearchOptions();
+		options.setNamespaceId(dbConn_.getNamespace());
+		System.out.println("Searching for NDF Concepts");
+		OntylogConcept[] oCons = dbConn_.searchQuery.findConceptsWithNameMatching(pattern, options);
+
+		System.out.println("Found " + oCons.length + " NDF Concept Codes");
+		for (int i = 0; i < oCons.length; i++)
+		{
+			// See if a rel lookup already grabbed this for us.
+			DTSConcept dtsConcept = codeToDTSConceptCache_.remove(oCons[i].getCode());
+			if (dtsConcept == null)
+			{
+				dtsConcept = dbConn_.ontQry.findConceptByCode(oCons[i].getCode(), dbConn_.getNamespace(),
+						ConceptAttributeSetDescriptor.ALL_ATTRIBUTES);
+			}
+			String nui = getPropValue(dtsConcept, "NUI");
+			if (nui != null)
+			{
+				// Populate these caches to avoid an extra trip to the DB during rel loading
+				codeToNUICache_.put(dtsConcept.getCode(), nui);
+				nameToNUICache_.put(dtsConcept.getName(), nui);
+			}
+			OntylogConcept oCon = (OntylogConcept) dtsConcept;
+			DTSRole[] conInferredRoles = oCon.getFetchedRoles();
+			OntylogConcept[] parentConcepts = oCon.getFetchedSuperconcepts();
+			if (parentConcepts.length == 0 && conInferredRoles.length == 0)
+			{
+				writeRootChildConcept(dtsConcept, buildUUIDFromNUI(nui), rootPrimordial);
+			}
+			else
+			{
+				writeDeepChildConcept(dtsConcept, buildUUIDFromNUI(nui), parentConcepts, conInferredRoles);
+			}
+		}
+		
+/////////////////////////////////////////////////////////////
+		/**
+		 * This is a hack to load a properly structured tree when the initial 
+		 * query has been limited in someway that would have left out nodes that 
+		 * complete the path to the root of the tree.
+		 * 
+		 * During a normal, full load, this code should not execute. 
+		 * 
+		 * This should probably be removed at some point.  
+		 * It prints to syserr if it executed.
+		 */
+		if (codeToDTSConceptCache_.size() > 0)
+		{
+			System.err.println("WARNING: Hack code adding " + codeToDTSConceptCache_.size());
+			System.err.println("This code should NOT be running if you are doing a full load!");
+			while (codeToDTSConceptCache_.size() > 0)
+			{
+				DTSConcept dtsConcept = (DTSConcept)codeToDTSConceptCache_.values().toArray()[0];
+				codeToDTSConceptCache_.remove(dtsConcept.getCode());
+				String nui = getPropValue(dtsConcept, "NUI");
+				if (nui != null)
+				{
+					// Populate these caches to avoid an extra trip to the DB during rel loading
+					codeToNUICache_.put(dtsConcept.getCode(), nui);
+					nameToNUICache_.put(dtsConcept.getName(), nui);
+				}
+				OntylogConcept oCon = (OntylogConcept) dtsConcept;
+				DTSRole[] conInferredRoles = oCon.getFetchedRoles();
+				OntylogConcept[] parentConcepts = oCon.getFetchedSuperconcepts();
+				if (parentConcepts.length == 0 && conInferredRoles.length == 0)
+				{
+					writeRootChildConcept(dtsConcept, buildUUIDFromNUI(nui), rootPrimordial);
+				}
+				else
+				{
+					writeDeepChildConcept(dtsConcept, buildUUIDFromNUI(nui), parentConcepts, conInferredRoles);
+				}
+			}
+		}
+		//End of hack code
+///////////////////////////////////////////		
+	}
+
+	private void checkForLeftoverPropertyTypes() throws Exception
+	{
+		DTSPropertyType[] propType = dbConn_.ontQry.getConceptPropertyTypes(dbConn_.getNamespace());
+		for (int i = 0; i < propType.length; i++)
+		{
+			PropertyType pt = propertyToPropertyType_.get(propType[i].getName());
+			if (pt == null)
+			{
+				System.err.println("ERROR:  No mapping for property type " + propType[i].getName());
+			}
+		}
+	}
+
+	private String getPropValue(DTSConcept dc, String sPropType)
+	{
+		DTSProperty[] props = dc.getFetchedProperties();
+		for (int i = 0; i < props.length; i++)
+		{
+			if (props[i].getPropertyType().getName().equals(sPropType))
+			{
+				return props[i].getValue();
+			}
+		}
+
+		// not found...
+		if (sPropType.equals("Display_Name"))
+		{
+			return dc.getName();
+		}
+
+		return null;
+	}
+
+	/**
+	 * Convenience method used to write the top level, invented root node.
+	 */
+	private UUID writeRootConcept(DTSConcept dtsConcept, UUID primordial) throws Exception
+	{
+		return writeNDFRTEConcept(dtsConcept, primordial, null, null, null);
+	}
+
+	/**
+	 * Convenience method Used when writing the top level of items found in DTS - tree items with no parents.
+	 * Attaches them to the root node invented for NDF. 
+	 */
+	private UUID writeRootChildConcept(DTSConcept dtsConcept, UUID primordial, UUID parentPrimordial) throws Exception
+	{
+		return writeNDFRTEConcept(dtsConcept, primordial, parentPrimordial, null, null);
+	}
+
+	/**
+	 * Convenience method used for writing items found at an arbitrary depth in the tree.
+	 */
+	private UUID writeDeepChildConcept(DTSConcept dtsConcept, UUID primordial, OntylogConcept[] parents,
+			DTSRole[] infRoles) throws Exception
+	{
+		return writeNDFRTEConcept(dtsConcept, primordial, null, parents, infRoles);
+	}
+
+	/**
+	 * Write a complete DTSConcept.  See the convenience methods, instead.
+	 * @see AllDTSToEConcepts#writeRootConcept(DTSConcept, UUID)
+	 * @see AllDTSToEConcepts#writeRootChildConcept(DTSConcept, UUID, UUID)
+	 * @see AllDTSToEConcepts#writeDeepChildConcept(DTSConcept, UUID, OntylogConcept[], DTSRole[])  
+	 */
+	private UUID writeNDFRTEConcept(DTSConcept dtsConcept, UUID primordial, UUID parentPrimordial, 
+			OntylogConcept[] parents, DTSRole[] infRoles) throws Exception
+	{
+		long time = System.currentTimeMillis();
+
+		EConcept concept = conceptUtility_.createConcept(primordial, getPropValue(dtsConcept, "Display_Name"), time);
+
+		//Property Handling
+		for (DTSProperty property : dtsConcept.getFetchedProperties())
+		{
+			if (property.getValue() != null)
+			{
+				TkComponent<?> annotableAddedItem =  null;
+				
+				PropertyType pt = propertyToPropertyType_.get(property.getName());
+				if (pt == null)
+				{
+					System.err.println("ERROR: No property type mapping for the property " + property.getName());
+				}
+				else
+				{
+					if (pt instanceof PT_IDs)
+					{
+						conceptUtility_.addAdditionalIds(concept, property.getName(), property.getValue(), 
+								pt.getPropertyUUID(property.getName()));
+					}
+					else if (pt instanceof PT_Descriptions)
+					{
+						annotableAddedItem = conceptUtility_.addDescription(concept, 
+								pt.getPropertyUUID(property.getName()), property.getValue());
+					}
+					else if (pt instanceof PT_Skip)
+					{
+						//noop
+					}
+					else
+					{
+						//annotation bucket
+						annotableAddedItem = conceptUtility_.addAnnotation(concept, property.getName(), property.getValue(), 
+								pt.getPropertyUUID(property.getName()));
+					}
+				}
+				
+				//Any qualifiers that need to be added to the property?
+				
+				DTSQualifier[] qualifiers = property.getFetchedQualifiers();
+				if (annotableAddedItem == null && qualifiers.length > 0)
+				{
+					System.err.println("ERROR: Design flaw - qualifier found on type that was loaded as non-qualifiable!");
+				}
+				if (annotableAddedItem != null)
+				{
+					for (DTSQualifier qualifier : qualifiers )
+					{
+						conceptUtility_.addAnnotation(annotableAddedItem, qualifier.getName(), qualifier.getValue(),
+								qualifiers_.getPropertyUUID(qualifier.getName()));
+					}
+				}
+			}
+		}
+		
+		//Load the synonyms
+		for (Synonym s : dtsConcept.getFetchedSynonyms())
+		{
+			conceptUtility_.addDescription(concept, propertyToPropertyType_.get("Synonym").getPropertyUUID("Synonym"), s.getTerm().getName());
+		}
+		
+		//Load the associations
+		for (ConceptAssociation ca : dtsConcept.getFetchedConceptAssociations())
+		{
+			TkRelationship relationship = conceptUtility_.addRelationship(concept, buildUUIDFromNUI(getNUIForCode(ca.getToConcept().getCode())), 
+					relations_.getPropertyUUID(ca.getAssociationType().getName())); 
+			
+			//And the qualifiers on the association, if any
+			DTSQualifier[] qualifiers = ca.getFetchedQualifiers();
+			for (DTSQualifier qualifier : qualifiers )
+			{
+				conceptUtility_.addAnnotation(relationship, qualifier.getName(), qualifier.getValue(),
+						qualifiers_.getPropertyUUID(qualifier.getName()));
+			}
+		}
+		
+		//create the is_a hierarchy if any parents were passed in. 
+
+		if (parentPrimordial != null || parents != null)
+		{
+			// If it has some sort of parent, add the is_a hierarchical relationship
+			if (parents != null)
+			{
+				for (int i = 0; i < parents.length; i++)
+				{
+					UUID foundParentPrimordial = buildUUIDFromNUI(getNUIForCode(parents[i].getCode()));
+					conceptUtility_.addRelationship(concept, foundParentPrimordial, null);
+				}
+			}
+			else if (parentPrimordial != null)
+			{
+				conceptUtility_.addRelationship(concept, parentPrimordial, null);
+			}
+
+			//Also load any other roles that were passed in.
+			if (infRoles != null)
+			{
+				for (int i = 0; i < infRoles.length; i++)
+				{
+					//TODO do we care about role modifiers?
+					OntylogConcept targetOCon = infRoles[i].getValueConcept();
+					conceptUtility_.addRelationship(concept, buildUUIDFromNUI(getNUIForName(targetOCon.getName())), 
+							relations_.getPropertyUUID(infRoles[i].getName())); 
+				}
+			}
+		}
+
+		//Store the final EConcept.
+		storeConcept(concept);
+		return primordial;
+	}
+
+	/**
+	 * Utility to help build UUIDs in a consistent manner.
+	 */
+	private UUID buildUUIDFromNUI(DTSConcept dtsConcept)
+	{
+		return buildUUIDFromNUI(getPropValue(dtsConcept, "NUI"));
+	}
+
+	/**
+	 * Utility to help build UUIDs in a consistent manner.
+	 */
+	private UUID buildUUIDFromNUI(String nui)
+	{
+		return UUID.nameUUIDFromBytes((uuidRoot_ + nui).getBytes());
+	}
 	
-	return rel;
-}
+	/**
+	 * Utility to help build UUIDs in a consistent manner.  Queries the DTS server if necessary
+	 * to find the nui for the code.  Stores the results in the caches for later use.
+	 */
+	private String getNUIForCode(String code) throws DTSException
+	{
+		String nui = codeToNUICache_.get(code);
+		if (nui == null)
+		{
+			DTSConcept parentDTSConcept = dbConn_.thesQuery.findConceptByCode(code, dbConn_.getNamespace(),
+					ConceptAttributeSetDescriptor.ALL_ATTRIBUTES);
+			nui = getPropValue(parentDTSConcept, "NUI");
+			// If we had to look it up, then the main loop hasn't looked it up yet.
+			// Cache the entire concept to save a trip later...
+			codeToDTSConceptCache_.put(parentDTSConcept.getCode(), parentDTSConcept);
+			codeToNUICache_.put(parentDTSConcept.getCode(), nui);
+			nameToNUICache_.put(parentDTSConcept.getName(), nui);
+		}
+		return nui;
+	}
+	
+	/**
+	 * Utility to help build UUIDs in a consistent manner.  Queries the DTS server if necessary
+	 * to find the nui for the code.  Stores the results in the cache for later use.
+	 */
+	private String getNUIForName(String name) throws DTSException
+	{
+		String nui = nameToNUICache_.get(name);
+		if (nui == null)
+		{
+			DTSConcept targetDTSConcept = dbConn_.thesQuery.findConceptByName(name, dbConn_.getNamespace(),
+					ConceptAttributeSetDescriptor.ALL_ATTRIBUTES);
+			nui = getPropValue(targetDTSConcept, "NUI");
+			// If we had to look it up, then the main loop hasn't looked it up yet.
+			// Cache the entire concept to save a trip later...
+			codeToDTSConceptCache_.put(targetDTSConcept.getCode(), targetDTSConcept);
+			codeToNUICache_.put(targetDTSConcept.getCode(), nui);
+			nameToNUICache_.put(targetDTSConcept.getName(), nui);
+		}
+		return nui;
+	}
+
+	/**
+	 * Utility method to build and store a metadata concept.
+	 */
+	private void writeAuxEConcept(UUID primordial, String name, UUID relParentPrimordial) throws Exception
+	{
+		EConcept concept = conceptUtility_.createConcept(primordial, name, System.currentTimeMillis());
+		conceptUtility_.addRelationship(concept, relParentPrimordial, null);
+		storeConcept(concept);
+	}
+
+	/**
+	 * Write an EConcept out to the jbin file.  Updates counters, prints status tics.
+	 */
+	private void storeConcept(EConcept concept) throws IOException
+	{
+		concept.writeExternal(dos_);
+		conCounter_++;
+
+		if (conCounter_ % 10 == 0)
+		{
+			System.out.print(".");
+		}
+		if (conCounter_ % 500 == 0)
+		{
+			System.out.println("");
+		}
+		if ((conCounter_ % 1000) == 0)
+		{
+			System.out.println("Processed: " + conCounter_ + " - just completed " + concept.getDescriptions().get(0).getText());
+		}
+	}
 }
