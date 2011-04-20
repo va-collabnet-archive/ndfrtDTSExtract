@@ -22,6 +22,7 @@ import org.ihtsdo.tk.dto.concept.component.TkComponent;
 import org.ihtsdo.tk.dto.concept.component.relationship.TkRelationship;
 
 import com.apelon.akcds.propertyTypes.PT_Attributes;
+import com.apelon.akcds.propertyTypes.PT_ContentVersion;
 import com.apelon.akcds.propertyTypes.PT_Descriptions;
 import com.apelon.akcds.propertyTypes.PT_IDs;
 import com.apelon.akcds.propertyTypes.PT_Qualifiers;
@@ -72,9 +73,11 @@ public class AllDTSToEConcepts extends AbstractMojo
 	private int conCounter_ = 0;
 
 	private final String uuidRoot_ = "com.apelon.akcds";
-	
+
+	//Want a specific handle to this one - adhoc usage.
+	private final PropertyType contentVersion_ = new PT_ContentVersion(uuidRoot_);
 	private final ArrayList<PropertyType> propertyTypes_ = new ArrayList<PropertyType>(Arrays.asList(new PropertyType[] {
-			new PT_IDs(uuidRoot_), new PT_Attributes(uuidRoot_), new PT_Descriptions(uuidRoot_),
+			new PT_IDs(uuidRoot_), new PT_Attributes(uuidRoot_), new PT_Descriptions(uuidRoot_), contentVersion_,
 			new PT_Skip(uuidRoot_)}));
 	
 	//These are slightly different than the property types, have special handling - so they are not added to the propertyTypes_ list.
@@ -124,9 +127,7 @@ public class AllDTSToEConcepts extends AbstractMojo
 
 			System.out.println("Loading Metadata");
 			
-			DTSConcept dtsRootCon = new DTSConcept("National Drug File Reference Terminology", dbConn_.getNamespace());
-			UUID rootPrimordial = writeRootConcept(dtsRootCon, buildUUIDFromNUI(dtsRootCon));// create root concept
-			
+			//Set up a meta-data root concept
 			UUID archRoot = ArchitectonicAuxiliary.Concept.ARCHITECTONIC_ROOT_CONCEPT.getPrimoridalUid();
 			UUID metaDataRoot = UUID.nameUUIDFromBytes((uuidRoot_ + ":metadata").getBytes());
 			writeAuxEConcept(metaDataRoot, "NDF-RT Metadata", archRoot);
@@ -168,6 +169,19 @@ public class AllDTSToEConcepts extends AbstractMojo
 			
 			//validate that we are configured to map all properties properly
 			checkForLeftoverPropertyTypes();
+			
+			//Create the root concept
+			EConcept rootConcept = conceptUtility_.createConcept(UUID.nameUUIDFromBytes((uuidRoot_ + ":root").getBytes()),
+					"National Drug File Reference Terminology", System.currentTimeMillis());
+			conceptUtility_.addDescription(rootConcept, contentVersion_.getPropertyUUID("name"), ns.getContentVersion().getName());
+			conceptUtility_.addDescription(rootConcept, contentVersion_.getPropertyUUID("id"), ns.getContentVersion().getId() + "");
+			conceptUtility_.addDescription(rootConcept, contentVersion_.getPropertyUUID("code"), ns.getContentVersion().getCode());
+			conceptUtility_.addDescription(rootConcept, contentVersion_.getPropertyUUID("namespaceId"), ns.getContentVersion().getNamespaceId() + "");
+			conceptUtility_.addDescription(rootConcept, contentVersion_.getPropertyUUID("releaseDate"), ns.getContentVersion().getReleaseDate().toString());
+			
+			storeConcept(rootConcept);
+
+			UUID rootPrimordial = rootConcept.getPrimordialUuid();
 			
 			System.out.println("");
 			
@@ -218,7 +232,7 @@ public class AllDTSToEConcepts extends AbstractMojo
 		//The hack code at the end of this class will fix any broken tree that is a result of the partial load.
 		String pattern = "*";   
 		DTSSearchOptions options = new DTSSearchOptions();
-		//options.setLimit(1500);
+		//options.setLimit(1);
 		options.setNamespaceId(dbConn_.getNamespace());
 		System.out.println("Searching for NDF Concepts");
 		OntylogConcept[] oCons = dbConn_.searchQuery.findConceptsWithNameMatching(pattern, options);
@@ -330,14 +344,6 @@ public class AllDTSToEConcepts extends AbstractMojo
 	}
 
 	/**
-	 * Convenience method used to write the top level, invented root node.
-	 */
-	private UUID writeRootConcept(DTSConcept dtsConcept, UUID primordial) throws Exception
-	{
-		return writeNDFRTEConcept(dtsConcept, primordial, null, null, null);
-	}
-
-	/**
 	 * Convenience method Used when writing the top level of items found in DTS - tree items with no parents.
 	 * Attaches them to the root node invented for NDF. 
 	 */
@@ -399,7 +405,7 @@ public class AllDTSToEConcepts extends AbstractMojo
 					else
 					{
 						//annotation bucket
-						annotableAddedItem = conceptUtility_.addAnnotation(concept, property.getName(), property.getValue(), 
+						annotableAddedItem = conceptUtility_.addAnnotation(concept, property.getValue(), 
 								pt.getPropertyUUID(property.getName()));
 					}
 				}
@@ -415,7 +421,7 @@ public class AllDTSToEConcepts extends AbstractMojo
 				{
 					for (DTSQualifier qualifier : qualifiers )
 					{
-						conceptUtility_.addAnnotation(annotableAddedItem, qualifier.getName(), qualifier.getValue(),
+						conceptUtility_.addAnnotation(annotableAddedItem, qualifier.getValue(),
 								qualifiers_.getPropertyUUID(qualifier.getName()));
 					}
 				}
@@ -438,7 +444,7 @@ public class AllDTSToEConcepts extends AbstractMojo
 			DTSQualifier[] qualifiers = ca.getFetchedQualifiers();
 			for (DTSQualifier qualifier : qualifiers )
 			{
-				conceptUtility_.addAnnotation(relationship, qualifier.getName(), qualifier.getValue(),
+				conceptUtility_.addAnnotation(relationship, qualifier.getValue(),
 						qualifiers_.getPropertyUUID(qualifier.getName()));
 			}
 		}
@@ -473,8 +479,9 @@ public class AllDTSToEConcepts extends AbstractMojo
 					RoleModifier rm = role.getRoleModifier();
 					if (rm != null)
 					{
-						conceptUtility_.addAnnotation(addedRelationship, relQualifiers_.getPropertyTypeDescription(), 
-								rm.getName(), relQualifiers_.getPropertyTypeUUID());
+						//See notes in PT_RelationQualifier to understand why the API is used differently in this case.
+						conceptUtility_.addAnnotation(addedRelationship, rm.getName(), 
+								relQualifiers_.getPropertyTypeUUID());
 					}
 				}
 			}
@@ -483,14 +490,6 @@ public class AllDTSToEConcepts extends AbstractMojo
 		//Store the final EConcept.
 		storeConcept(concept);
 		return primordial;
-	}
-
-	/**
-	 * Utility to help build UUIDs in a consistent manner.
-	 */
-	private UUID buildUUIDFromNUI(DTSConcept dtsConcept)
-	{
-		return buildUUIDFromNUI(getPropValue(dtsConcept, "NUI"));
 	}
 
 	/**
@@ -546,11 +545,12 @@ public class AllDTSToEConcepts extends AbstractMojo
 	/**
 	 * Utility method to build and store a metadata concept.
 	 */
-	private void writeAuxEConcept(UUID primordial, String name, UUID relParentPrimordial) throws Exception
+	private EConcept writeAuxEConcept(UUID primordial, String name, UUID relParentPrimordial) throws Exception
 	{
 		EConcept concept = conceptUtility_.createConcept(primordial, name, System.currentTimeMillis());
 		conceptUtility_.addRelationship(concept, relParentPrimordial, null);
 		storeConcept(concept);
+		return concept;
 	}
 
 	/**

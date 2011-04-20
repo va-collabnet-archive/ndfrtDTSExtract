@@ -109,7 +109,7 @@ public class EConceptUtility
 		return null;
 	}
 	
-	public TkRefsetStrMember addAnnotation(TkComponent<?> component, String name, String value, UUID refsetUUID)
+	public TkRefsetStrMember addAnnotation(TkComponent<?> component, String value, UUID refsetUUID)
 	{
 		List<TkRefsetAbstractMember<?>> annotations = component.getAnnotations();
 
@@ -137,10 +137,10 @@ public class EConceptUtility
 		return null;
 	}
 	
-	public TkRefsetStrMember addAnnotation(EConcept concept, String name, String value, UUID refsetUUID)
+	public TkRefsetStrMember addAnnotation(EConcept concept, String value, UUID refsetUUID)
 	{
 		TkConceptAttributes conceptAttributes = concept.getConceptAttributes();
-		return addAnnotation(conceptAttributes, name, value, refsetUUID);
+		return addAnnotation(conceptAttributes, value, refsetUUID);
 	}
 	
 	/**
