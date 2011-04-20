@@ -25,6 +25,7 @@ import com.apelon.akcds.propertyTypes.PT_Attributes;
 import com.apelon.akcds.propertyTypes.PT_Descriptions;
 import com.apelon.akcds.propertyTypes.PT_IDs;
 import com.apelon.akcds.propertyTypes.PT_Qualifiers;
+import com.apelon.akcds.propertyTypes.PT_RelationQualifier;
 import com.apelon.akcds.propertyTypes.PT_Relations;
 import com.apelon.akcds.propertyTypes.PT_Skip;
 import com.apelon.akcds.propertyTypes.PropertyType;
@@ -36,6 +37,7 @@ import com.apelon.dts.client.attribute.DTSPropertyType;
 import com.apelon.dts.client.attribute.DTSQualifier;
 import com.apelon.dts.client.attribute.DTSRole;
 import com.apelon.dts.client.attribute.DTSRoleType;
+import com.apelon.dts.client.attribute.RoleModifier;
 import com.apelon.dts.client.concept.ConceptAttributeSetDescriptor;
 import com.apelon.dts.client.concept.DTSConcept;
 import com.apelon.dts.client.concept.DTSSearchOptions;
@@ -73,11 +75,12 @@ public class AllDTSToEConcepts extends AbstractMojo
 	
 	private final ArrayList<PropertyType> propertyTypes_ = new ArrayList<PropertyType>(Arrays.asList(new PropertyType[] {
 			new PT_IDs(uuidRoot_), new PT_Attributes(uuidRoot_), new PT_Descriptions(uuidRoot_),
-			new PT_Skip(uuidRoot_) }));
+			new PT_Skip(uuidRoot_)}));
 	
 	//These are slightly different than the property types, have special handling - so they are not added to the propertyTypes_ list.
 	private final PT_Qualifiers qualifiers_ = new PT_Qualifiers(uuidRoot_); 
 	private final PT_Relations relations_ = new PT_Relations(uuidRoot_); 
+	private final PT_RelationQualifier relQualifiers_ =  new PT_RelationQualifier(uuidRoot_);
 	
 	//Various caches for performance reasons
 	private Hashtable<String, String> codeToNUICache_ = new Hashtable<String, String>();
@@ -138,6 +141,7 @@ public class AllDTSToEConcepts extends AbstractMojo
 			//Create metadata structures for the qualifiers and relations
 			loadMetaDataItems(qualifiers_, metaDataRoot);
 			loadMetaDataItems(relations_, metaDataRoot);
+			loadMetaDataItems(relQualifiers_, metaDataRoot);
 			
 			//And for all of the other property types
 			for (PropertyType pt : propertyTypes_)
@@ -214,6 +218,7 @@ public class AllDTSToEConcepts extends AbstractMojo
 		//The hack code at the end of this class will fix any broken tree that is a result of the partial load.
 		String pattern = "*";   
 		DTSSearchOptions options = new DTSSearchOptions();
+		//options.setLimit(1500);
 		options.setNamespaceId(dbConn_.getNamespace());
 		System.out.println("Searching for NDF Concepts");
 		OntylogConcept[] oCons = dbConn_.searchQuery.findConceptsWithNameMatching(pattern, options);
@@ -459,12 +464,18 @@ public class AllDTSToEConcepts extends AbstractMojo
 			//Also load any other roles that were passed in.
 			if (infRoles != null)
 			{
-				for (int i = 0; i < infRoles.length; i++)
+				for (DTSRole role : infRoles)
 				{
-					//TODO do we care about role modifiers?
-					OntylogConcept targetOCon = infRoles[i].getValueConcept();
-					conceptUtility_.addRelationship(concept, buildUUIDFromNUI(getNUIForName(targetOCon.getName())), 
-							relations_.getPropertyUUID(infRoles[i].getName())); 
+					TkRelationship addedRelationship = conceptUtility_.addRelationship(concept, 
+							buildUUIDFromNUI(getNUIForName(role.getValueConcept().getName())), 
+							relations_.getPropertyUUID(role.getName()));
+					
+					RoleModifier rm = role.getRoleModifier();
+					if (rm != null)
+					{
+						conceptUtility_.addAnnotation(addedRelationship, relQualifiers_.getPropertyTypeDescription(), 
+								rm.getName(), relQualifiers_.getPropertyTypeUUID());
+					}
 				}
 			}
 		}
