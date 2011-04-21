@@ -6,7 +6,7 @@
     <fileSet>
       <directory>${project.build.directory}</directory>
       <includes>
-         <include>NDFRTEConcepts.jbin</include>
+         <include>ndfrtEConcepts.jbin</include>
       </includes>
       <outputDirectory>/</outputDirectory>
     </fileSet>

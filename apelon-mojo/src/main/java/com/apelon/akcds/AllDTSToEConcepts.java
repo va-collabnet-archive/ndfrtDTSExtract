@@ -125,7 +125,7 @@ public class AllDTSToEConcepts extends AbstractMojo
 			}
 
 			conceptUtility_ = new EConceptUtility(uuidRoot_);
-			File binaryOutputFile = new File(outputDirectory, "NDFRTEConcepts.jbin");
+			File binaryOutputFile = new File(outputDirectory, "ndfrtEConcepts.jbin");
 			
 			//Connect to DTS
 			dbConn_ = new DbConn();
