@@ -6,7 +6,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.Hashtable;
 import java.util.UUID;
@@ -76,9 +75,9 @@ public class AllDTSToEConcepts extends AbstractMojo
 
 	//Want a specific handle to this one - adhoc usage.
 	private final PropertyType contentVersion_ = new PT_ContentVersion(uuidRoot_);
-	private final ArrayList<PropertyType> propertyTypes_ = new ArrayList<PropertyType>(Arrays.asList(new PropertyType[] {
-			new PT_IDs(uuidRoot_), new PT_Attributes(uuidRoot_), new PT_Descriptions(uuidRoot_), contentVersion_,
-			new PT_Skip(uuidRoot_)}));
+	
+	
+	private final ArrayList<PropertyType> propertyTypes_ = new ArrayList<PropertyType>();
 	
 	//These are slightly different than the property types, have special handling - so they are not added to the propertyTypes_ list.
 	private final PT_Qualifiers qualifiers_ = new PT_Qualifiers(uuidRoot_); 
@@ -91,6 +90,17 @@ public class AllDTSToEConcepts extends AbstractMojo
 	private Hashtable<String, DTSConcept> codeToDTSConceptCache_ = new Hashtable<String, DTSConcept>();
 	private Hashtable<String, PropertyType> propertyToPropertyType_ = new Hashtable<String, PropertyType>();
 
+	public AllDTSToEConcepts()
+	{
+		//This could be one nice, neat line of code in the class init section.  But maven is broken and can't parse valid java.  
+		//Sigh.  Broken up to appease the maven gods.
+		
+		propertyTypes_.add(new PT_IDs(uuidRoot_));
+		propertyTypes_.add(new PT_Attributes(uuidRoot_));
+		propertyTypes_.add(new PT_Descriptions(uuidRoot_));
+		propertyTypes_.add(contentVersion_);
+		propertyTypes_.add(new PT_Skip(uuidRoot_));
+	}
 	/**
 	 * Used for debug. Sets up the same paths that maven would use.... allow the code to be run standalone.
 	 */
@@ -232,7 +242,7 @@ public class AllDTSToEConcepts extends AbstractMojo
 		//The hack code at the end of this class will fix any broken tree that is a result of the partial load.
 		String pattern = "*";   
 		DTSSearchOptions options = new DTSSearchOptions();
-		//options.setLimit(1);
+		//options.setLimit(50);
 		options.setNamespaceId(dbConn_.getNamespace());
 		System.out.println("Searching for NDF Concepts");
 		OntylogConcept[] oCons = dbConn_.searchQuery.findConceptsWithNameMatching(pattern, options);
