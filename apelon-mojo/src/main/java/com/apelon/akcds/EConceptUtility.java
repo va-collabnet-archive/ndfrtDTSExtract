@@ -15,6 +15,9 @@ import org.ihtsdo.tk.dto.concept.component.identifier.TkIdentifier;
 import org.ihtsdo.tk.dto.concept.component.refset.TkRefsetAbstractMember;
 import org.ihtsdo.tk.dto.concept.component.refset.str.TkRefsetStrMember;
 import org.ihtsdo.tk.dto.concept.component.relationship.TkRelationship;
+
+import com.apelon.akcds.counter.LoadStats;
+import com.apelon.akcds.counter.UUIDInfo;
 /**
  * Various constants and methods for building up workbench EConcepts.
  * @author Daniel Armbrust
@@ -31,14 +34,19 @@ public class EConceptUtility
 	
 	private final String lang_ = "en";
 	
+	//Used for making unique UUIDs
 	private int relCounter_ = 0;
 	private int annotationCounter_ = 0;
+	
+	private LoadStats ls_ = new LoadStats();
 	
 	private String uuidRoot_;
 
 	public EConceptUtility(String uuidRoot) throws Exception
 	{
 		this.uuidRoot_ = uuidRoot;
+		UUIDInfo.add(isARel, "isA");
+		UUIDInfo.add(preferredTerm_, "Display_Name->preferredTerm");
 	}
 
 	public EConcept createConcept(UUID primordial, String preferredDescription, long time)
@@ -56,6 +64,7 @@ public class EConceptUtility
 		
 		addDescription(concept, preferredTerm_, preferredDescription);
 
+		ls_.addConcept();
 		return concept;
 	}
 	
@@ -79,10 +88,11 @@ public class EConceptUtility
 		description.setTime(System.currentTimeMillis());
 
 		descriptions.add(description);
+		ls_.addDescription(UUIDInfo.getUUIDBaseStringLastSection(descriptionType));
 		return description;
 	}
 	
-	public EIdentifierString addAdditionalIds(EConcept concept, String propTypeName, Object denotation, UUID authorityUUID)
+	public EIdentifierString addAdditionalIds(EConcept concept, Object denotation, UUID authorityUUID)
 	{
 		if (denotation != null)
 		{
@@ -104,6 +114,7 @@ public class EConceptUtility
 			cid.setTime(System.currentTimeMillis());
 			// populate the actual value of the identifier
 			cid.setDenotation(denotation);
+			ls_.addId(UUIDInfo.getUUIDBaseStringLastSection(authorityUUID));
 			return cid;
 		}
 		return null;
@@ -132,6 +143,22 @@ public class EConceptUtility
 			strRefexMember.setPathUuid(path_);
 			strRefexMember.setTime(System.currentTimeMillis());
 			annotations.add(strRefexMember);
+			if (component instanceof TkConceptAttributes)
+			{
+				ls_.addAnnotation("Concept", UUIDInfo.getUUIDBaseStringLastSection(refsetUUID));
+			}
+			else if (component instanceof TkRelationship)
+			{
+				ls_.addAnnotation(UUIDInfo.getUUIDBaseStringLastSection(((TkRelationship) component).getTypeUuid()), UUIDInfo.getUUIDBaseStringLastSection(refsetUUID));
+			}
+			else if (component instanceof TkRefsetStrMember)
+			{
+				ls_.addAnnotation(UUIDInfo.getUUIDBaseStringLastSection(((TkRefsetStrMember) component).getRefsetUuid()), UUIDInfo.getUUIDBaseStringLastSection(refsetUUID));
+			}
+			else
+			{
+				ls_.addAnnotation(UUIDInfo.getUUIDBaseStringLastSection(component.getPrimordialComponentUuid()), UUIDInfo.getUUIDBaseStringLastSection(refsetUUID));
+			}
 			return strRefexMember;
 		}
 		return null;
@@ -169,11 +196,17 @@ public class EConceptUtility
 		rel.setRelGroup(0);  
 
 		relationships.add(rel);
+		ls_.addRelationship(UUIDInfo.getUUIDBaseStringLastSection(relationshipPrimoridal == null ? isARel : relationshipPrimoridal));
 		return rel;
 	}
 	
-	public int getCreatedRelCount()
+	public LoadStats getLoadStats()
 	{
-		return relCounter_;
+		return ls_;
+	}
+	
+	public void clearLoadStats()
+	{
+		ls_ = new LoadStats();
 	}
 }

@@ -20,6 +20,7 @@ import org.ihtsdo.etypes.EConcept;
 import org.ihtsdo.tk.dto.concept.component.TkComponent;
 import org.ihtsdo.tk.dto.concept.component.relationship.TkRelationship;
 
+import com.apelon.akcds.counter.UUIDInfo;
 import com.apelon.akcds.propertyTypes.PT_Attributes;
 import com.apelon.akcds.propertyTypes.PT_ContentVersion;
 import com.apelon.akcds.propertyTypes.PT_Descriptions;
@@ -194,13 +195,28 @@ public class AllDTSToEConcepts extends AbstractMojo
 			UUID rootPrimordial = rootConcept.getPrimordialUuid();
 			
 			System.out.println("");
+			System.out.println("Metadata summary:");
+			for (String s : conceptUtility_.getLoadStats().getSummary())
+			{
+				System.out.println("  " + s);
+			}
+			conceptUtility_.clearLoadStats();
+			conCounter_ = 0;
 			
 			//Load the data
 			createAllConcepts(rootPrimordial);
 
 			System.out.println("");
-			System.out.println("Wrote " + conCounter_ + " EConcepts");
-			System.out.println("Wrote " + conceptUtility_.getCreatedRelCount() + " relationships");
+			System.out.println("Data Load Summary:");
+			for (String s : conceptUtility_.getLoadStats().getSummary())
+			{
+				System.out.println("  " + s);
+			}
+			
+			//TODO this should be removed from final release.  Just added to help debug editor problems.
+			System.out.println("Dumping UUID Debug File");
+			UUIDInfo.dump(new File(outputDirectory, "uuidDebugMap.txt"));
+			
 			System.out.println("NDFRT Processing Completes " + new Date().toString());
 		}
 		catch (Exception ex)
@@ -400,8 +416,7 @@ public class AllDTSToEConcepts extends AbstractMojo
 				{
 					if (pt instanceof PT_IDs)
 					{
-						conceptUtility_.addAdditionalIds(concept, property.getName(), property.getValue(), 
-								pt.getPropertyUUID(property.getName()));
+						conceptUtility_.addAdditionalIds(concept, property.getValue(), pt.getPropertyUUID(property.getName()));
 					}
 					else if (pt instanceof PT_Descriptions)
 					{
@@ -507,7 +522,9 @@ public class AllDTSToEConcepts extends AbstractMojo
 	 */
 	private UUID buildUUIDFromNUI(String nui)
 	{
-		return UUID.nameUUIDFromBytes((uuidRoot_ + nui).getBytes());
+		UUID uuid = UUID.nameUUIDFromBytes((uuidRoot_ + ":" + nui).getBytes());
+		UUIDInfo.add(uuid, uuidRoot_ + ":" + nui);
+		return uuid;
 	}
 	
 	/**
@@ -555,12 +572,11 @@ public class AllDTSToEConcepts extends AbstractMojo
 	/**
 	 * Utility method to build and store a metadata concept.
 	 */
-	private EConcept writeAuxEConcept(UUID primordial, String name, UUID relParentPrimordial) throws Exception
+	private void writeAuxEConcept(UUID primordial, String name, UUID relParentPrimordial) throws Exception
 	{
 		EConcept concept = conceptUtility_.createConcept(primordial, name, System.currentTimeMillis());
 		conceptUtility_.addRelationship(concept, relParentPrimordial, null);
 		storeConcept(concept);
-		return concept;
 	}
 
 	/**

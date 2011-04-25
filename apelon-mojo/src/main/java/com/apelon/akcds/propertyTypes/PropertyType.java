@@ -3,6 +3,8 @@ package com.apelon.akcds.propertyTypes;
 import java.util.Set;
 import java.util.UUID;
 
+import com.apelon.akcds.counter.UUIDInfo;
+
 /**
  * Abstract base class to help in mapping DTS property types into the workbench data model.
  * 
@@ -27,12 +29,16 @@ public abstract class PropertyType
 	
 	public UUID getPropertyUUID(String propertyName)
 	{
-		return UUID.nameUUIDFromBytes((uuidRoot_ + ":" + propertyTypeDescription_ + ":" + propertyName).getBytes());
+		UUID uuid = UUID.nameUUIDFromBytes((uuidRoot_ + ":" + propertyTypeDescription_ + ":" + propertyName).getBytes());
+		UUIDInfo.add(uuid, uuidRoot_ + ":" + propertyTypeDescription_ + ":" + propertyName);
+		return uuid;
 	}
 	
 	public UUID getPropertyTypeUUID()
 	{
-		return UUID.nameUUIDFromBytes((uuidRoot_ + ":" + propertyTypeDescription_).getBytes());
+		UUID uuid = UUID.nameUUIDFromBytes((uuidRoot_ + ":" + propertyTypeDescription_).getBytes());
+		UUIDInfo.add(uuid, uuidRoot_ + ":" + propertyTypeDescription_);
+		return uuid;
 	}
 	
 	public String getPropertyTypeDescription()
