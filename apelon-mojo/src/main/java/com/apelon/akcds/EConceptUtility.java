@@ -22,6 +22,8 @@ import com.apelon.akcds.counter.UUIDInfo;
  * Various constants and methods for building up workbench EConcepts.
  * @author Daniel Armbrust
  */
+//TODO - this code is copy/paste inheritance from the SPL loader.  Really need to share this code....
+
 public class EConceptUtility
 {
 	private final UUID author_ = ArchitectonicAuxiliary.Concept.USER.getPrimoridalUid();
@@ -37,6 +39,7 @@ public class EConceptUtility
 	//Used for making unique UUIDs
 	private int relCounter_ = 0;
 	private int annotationCounter_ = 0;
+	private int descCounter_ = 0;
 	
 	private LoadStats ls_ = new LoadStats();
 	
@@ -79,7 +82,7 @@ public class EConceptUtility
 		TkDescription description = new TkDescription();
 		description.setConceptUuid(concept.getPrimordialUuid());
 		description.setLang(lang_);
-		description.setPrimordialComponentUuid(UUID.randomUUID());
+		description.setPrimordialComponentUuid(UUID.nameUUIDFromBytes((uuidRoot_ + "descr:" + descCounter_++).getBytes()));
 		description.setTypeUuid(descriptionType);
 		description.setText(descriptionValue);
 		description.setStatusUuid(currentUuid_);
