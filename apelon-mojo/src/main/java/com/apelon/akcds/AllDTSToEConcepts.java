@@ -53,7 +53,7 @@ import com.apelon.dts.client.namespace.Namespace;
  * Paths are typically controlled by maven, however, the main() method has paths configured so that they 
  * match what maven does for test purposes.
  * 
- * @goal generate-apelon-data
+ * @goal convert-ndfrt-DTS-to-jbin
  * 
  * @phase process-sources
  */
@@ -258,7 +258,7 @@ public class AllDTSToEConcepts extends AbstractMojo
 		//The hack code at the end of this class will fix any broken tree that is a result of the partial load.
 		String pattern = "*";   
 		DTSSearchOptions options = new DTSSearchOptions();
-		//options.setLimit(50);
+		options.setLimit(50);
 		options.setNamespaceId(dbConn_.getNamespace());
 		System.out.println("Searching for NDF Concepts");
 		OntylogConcept[] oCons = dbConn_.searchQuery.findConceptsWithNameMatching(pattern, options);
