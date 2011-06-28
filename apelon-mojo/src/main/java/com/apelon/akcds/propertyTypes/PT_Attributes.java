@@ -12,6 +12,8 @@ public class PT_Attributes extends PropertyType
 	public PT_Attributes(String uuidRoot)
 	{
 		super(new HashSet<String>(Arrays.asList(new String[] { "Level", "Class_Code",
-			"CS_Federal_Schedule", "Severity", "Status", "Strength", "Units", "VANDF_Record"  })), "Attribute Types", uuidRoot);
+			"CS_Federal_Schedule", "Severity", "Status", "Strength", "Units", "VANDF_Record", 
+			"RxNorm_CUI", "FDA_UNII", "UMLS_CUI", "MeSH_CUI", "MeSH_DUI", "SNOMED_CID",  })),
+			"Attribute Types", uuidRoot);
 	}
 }

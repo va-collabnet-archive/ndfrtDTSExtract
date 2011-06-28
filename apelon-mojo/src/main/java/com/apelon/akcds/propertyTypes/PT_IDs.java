@@ -11,7 +11,6 @@ public class PT_IDs extends PropertyType
 {
 	public PT_IDs(String uuidRoot)
 	{
-		super(new HashSet<String>(Arrays.asList(new String[] { "NUI", "RxNorm_CUI", "FDA_UNII", "UMLS_CUI", "MeSH_CUI", "MeSH_DUI",
-				"SNOMED_CID", "VUID" })), "ID Types", uuidRoot);
+		super(new HashSet<String>(Arrays.asList(new String[] { "NUI", "VUID" })), "ID Types", uuidRoot);
 	}
 }
