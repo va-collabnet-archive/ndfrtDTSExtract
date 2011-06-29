@@ -7,34 +7,31 @@
 		<version>1.0-SNAPSHOT</version>
 	</parent>
 	<groupId>com.apelon.va.ihtsdo.wb.ndfrt</groupId>
-	<artifactId>ndfrt-data</artifactId>
+	<artifactId>ndfrt-data-test</artifactId>
 	<packaging>pom</packaging>
 	<name>${project.parent.artifactId}: apelon data</name>
-	<version>1.0-SNAPSHOT</version>
+	<version>1</version>
 	<url>http://maven.apache.org</url>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 	<build>
 		<plugins>
-			<plugin>
+		    <plugin>
 				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-install-plugin</artifactId>
+				<artifactId>maven-assembly-plugin</artifactId>
 				<executions>
 					<execution>
-						<id>install-jbin-file</id>
-						<phase>install</phase>
-						<goals>
-							<goal>install-file</goal>
-						</goals>
+						<id>attach-data</id>
 						<configuration>
-							<file>${project.build.directory}/ndfrtEConcepts.jbin</file>
-							<generatePom>true</generatePom>
-							<groupId>com.apelon.va.ihtsdo.wb.ndfrt</groupId>
-							<artifactId>ndfrt-data-test</artifactId>
-							<packaging>jbin</packaging>
-							<version>1</version>
+							<descriptors>
+								<descriptor>resources/assembly/generated-artifact.xml</descriptor>
+							</descriptors>
 						</configuration>
+						<goals>
+							<goal>single</goal>
+						</goals>
+						<phase>package</phase>
 					</execution>
 				</executions>
 			</plugin>
