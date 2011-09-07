@@ -4,7 +4,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 
 /**
- * Properties from the DTS ndf load which are treated as alternate IDs within the workbench.
+ * Invented property with special handling for root node in workbench.
  * @author Daniel Armbrust
  */
 public class PT_ContentVersion extends PropertyType
