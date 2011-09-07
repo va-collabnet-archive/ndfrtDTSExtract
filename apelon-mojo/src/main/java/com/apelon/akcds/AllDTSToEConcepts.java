@@ -144,7 +144,7 @@ public class AllDTSToEConcepts extends AbstractMojo
 			writeAuxEConcept(metaDataRoot, "NDF-RT Metadata", archRoot);
 			
 			//Load the roles found in DTS into our relations structure
-			DTSRoleType[] roleTypes = dbConn_.ontQry.getAllRoleTypes();
+			DTSRoleType[] roleTypes = dbConn_.ontQry.getRoleTypes(dbConn_.getNamespace());
 			for (int i = 0; i < roleTypes.length; i++)
 			{
 				relations_.addRelation(roleTypes[i].getName());
