@@ -71,8 +71,6 @@ public class AllDTSToEConcepts extends AbstractMojo
 	private EConceptUtility conceptUtility_;
 
 	private int conCounter_ = 0;
-
-	//TODO fix duplicate rel name (case) issues!
 	
 	private final String uuidRoot_ = "com.apelon.akcds";
 
