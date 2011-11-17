@@ -37,7 +37,7 @@
 			</plugin>
 			<plugin>
 				<groupId>com.apelon.va.ihtsdo.wb.ndfrt</groupId>
-				<artifactId>apelon-mojo</artifactId>
+				<artifactId>ndfrtDTSExtract-mojo</artifactId>
 				<executions>
 					<execution>
 						<id>genereate-jbin</id>
