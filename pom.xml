@@ -4,9 +4,9 @@
 
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.apelon.va.ihtsdo.wb.ndfrt</groupId>
-  <artifactId>ndfrt-import-parent</artifactId>
+  <artifactId>ndfrtDTSExtract</artifactId>
   <version>1.0-SNAPSHOT</version>
-  <name>ndfrt-import-parent</name>
+  <name>ndfrtDTSExtract</name>
   <packaging>pom</packaging>
   
   <properties>
@@ -62,7 +62,7 @@
   </build>
 
   <modules>
-    <module>apelon-data</module>
-    <module>apelon-mojo</module>
+    <module>ndfrtDTSExtract-data</module>
+    <module>ndfrtDTSExtract-mojo</module>
   </modules>
 </project>
