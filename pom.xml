@@ -14,6 +14,12 @@
     <wb-toolkit.version>2.6.0-trek-60</wb-toolkit.version>
   </properties>
   
+  <scm>
+    <connection>scm:svn:https://csfe.aceworkspace.net/svn/repos/akcds-test/ihtsdoWorkbench/_externalDataExtraction/ndfrtDTSExtract</connection>
+    <developerConnection>scm:svn:https://csfe.aceworkspace.net/svn/repos/akcds-test/ihtsdoWorkbench/_externalDataExtraction/ndfrtDTSExtract</developerConnection>
+    <url>https://csfe.aceworkspace.net/integration/viewvc/viewvc.cgi/ihtsdoWorkbench/_externalDataExtraction/ndfrtDTSExtract/?root=akcds-test&amp;system=exsy1002</url>
+  </scm>
+  
   <dependencyManagement>
     <dependencies>
       <dependency>
