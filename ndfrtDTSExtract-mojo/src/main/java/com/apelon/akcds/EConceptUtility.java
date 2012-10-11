@@ -9,11 +9,12 @@ import org.ihtsdo.etypes.EConcept;
 import org.ihtsdo.etypes.EConceptAttributes;
 import org.ihtsdo.etypes.EIdentifierString;
 import org.ihtsdo.tk.dto.concept.component.TkComponent;
+import org.ihtsdo.tk.dto.concept.component.TkRevision;
 import org.ihtsdo.tk.dto.concept.component.attribute.TkConceptAttributes;
 import org.ihtsdo.tk.dto.concept.component.description.TkDescription;
 import org.ihtsdo.tk.dto.concept.component.identifier.TkIdentifier;
-import org.ihtsdo.tk.dto.concept.component.refset.TkRefsetAbstractMember;
-import org.ihtsdo.tk.dto.concept.component.refset.str.TkRefsetStrMember;
+import org.ihtsdo.tk.dto.concept.component.refex.TkRefexAbstractMember;
+import org.ihtsdo.tk.dto.concept.component.refex.type_string.TkRefsetStrMember;
 import org.ihtsdo.tk.dto.concept.component.relationship.TkRelationship;
 
 import com.apelon.akcds.counter.LoadStats;
@@ -62,6 +63,7 @@ public class EConceptUtility
 		conceptAttributes.setPrimordialComponentUuid(primordial);
 		conceptAttributes.setStatusUuid(currentUuid_);
 		conceptAttributes.setPathUuid(path_);
+		conceptAttributes.setModuleUuid(TkRevision.unspecifiedModuleUuid);
 		conceptAttributes.setTime(time);
 		concept.setConceptAttributes(conceptAttributes);
 		
@@ -88,6 +90,7 @@ public class EConceptUtility
 		description.setStatusUuid(currentUuid_);
 		description.setAuthorUuid(author_);
 		description.setPathUuid(path_);
+		description.setModuleUuid(TkRevision.unspecifiedModuleUuid);
 		description.setTime(System.currentTimeMillis());
 
 		descriptions.add(description);
@@ -112,7 +115,9 @@ public class EConceptUtility
 
 			// populate the identifier with the usual suspects
 			cid.setAuthorityUuid(authorityUUID);
+			cid.setAuthorUuid(author_);
 			cid.setPathUuid(path_);
+			cid.setModuleUuid(TkRevision.unspecifiedModuleUuid);
 			cid.setStatusUuid(currentUuid_);
 			cid.setTime(System.currentTimeMillis());
 			// populate the actual value of the identifier
@@ -125,11 +130,11 @@ public class EConceptUtility
 	
 	public TkRefsetStrMember addAnnotation(TkComponent<?> component, String value, UUID refsetUUID)
 	{
-		List<TkRefsetAbstractMember<?>> annotations = component.getAnnotations();
+		List<TkRefexAbstractMember<?>> annotations = component.getAnnotations();
 
 		if (annotations == null)
 		{
-			annotations = new ArrayList<TkRefsetAbstractMember<?>>();
+			annotations = new ArrayList<TkRefexAbstractMember<?>>();
 			component.setAnnotations(annotations);
 		}
 
@@ -138,12 +143,13 @@ public class EConceptUtility
 			TkRefsetStrMember strRefexMember = new TkRefsetStrMember();
 
 			strRefexMember.setComponentUuid(component.getPrimordialComponentUuid());
-			strRefexMember.setStrValue(value);
+			strRefexMember.setString1(value);
 			strRefexMember.setPrimordialComponentUuid(UUID.nameUUIDFromBytes((uuidRoot_ + "annotation:" + annotationCounter_++).getBytes()));
 			strRefexMember.setRefsetUuid(refsetUUID);
 			strRefexMember.setStatusUuid(currentUuid_);
 			strRefexMember.setAuthorUuid(author_);
 			strRefexMember.setPathUuid(path_);
+			strRefexMember.setModuleUuid(TkRevision.unspecifiedModuleUuid);
 			strRefexMember.setTime(System.currentTimeMillis());
 			annotations.add(strRefexMember);
 			if (component instanceof TkConceptAttributes)
@@ -156,7 +162,7 @@ public class EConceptUtility
 			}
 			else if (component instanceof TkRefsetStrMember)
 			{
-				ls_.addAnnotation(UUIDInfo.getUUIDBaseStringLastSection(((TkRefsetStrMember) component).getRefsetUuid()), UUIDInfo.getUUIDBaseStringLastSection(refsetUUID));
+				ls_.addAnnotation(UUIDInfo.getUUIDBaseStringLastSection(((TkRefsetStrMember) component).getRefexUuid()), UUIDInfo.getUUIDBaseStringLastSection(refsetUUID));
 			}
 			else
 			{
@@ -195,6 +201,7 @@ public class EConceptUtility
 		rel.setStatusUuid(currentUuid_);
 		rel.setAuthorUuid(author_);
 		rel.setPathUuid(path_);
+		rel.setModuleUuid(TkRevision.unspecifiedModuleUuid);
 		rel.setTime(System.currentTimeMillis());
 		rel.setRelGroup(0);  
 
