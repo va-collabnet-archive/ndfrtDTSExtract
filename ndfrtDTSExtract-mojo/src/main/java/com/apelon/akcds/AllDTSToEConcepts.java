@@ -184,11 +184,11 @@ public class AllDTSToEConcepts extends AbstractMojo
 			//Create the root concept
 			EConcept rootConcept = conceptUtility_.createConcept(UUID.nameUUIDFromBytes((uuidRoot_ + ":root").getBytes()),
 					"National Drug File Reference Terminology", System.currentTimeMillis());
-			conceptUtility_.addDescription(rootConcept, contentVersion_.getPropertyUUID("name"), ns.getContentVersion().getName());
-			conceptUtility_.addDescription(rootConcept, contentVersion_.getPropertyUUID("id"), ns.getContentVersion().getId() + "");
-			conceptUtility_.addDescription(rootConcept, contentVersion_.getPropertyUUID("code"), ns.getContentVersion().getCode());
-			conceptUtility_.addDescription(rootConcept, contentVersion_.getPropertyUUID("namespaceId"), ns.getContentVersion().getNamespaceId() + "");
-			conceptUtility_.addDescription(rootConcept, contentVersion_.getPropertyUUID("releaseDate"), ns.getContentVersion().getReleaseDate().toString());
+			conceptUtility_.addDescription(rootConcept, ns.getContentVersion().getName(), contentVersion_.getPropertyUUID("name"), false);
+			conceptUtility_.addDescription(rootConcept, ns.getContentVersion().getId() + "", contentVersion_.getPropertyUUID("id"), false);
+			conceptUtility_.addDescription(rootConcept, ns.getContentVersion().getCode(), contentVersion_.getPropertyUUID("code"), false);
+			conceptUtility_.addDescription(rootConcept, ns.getContentVersion().getNamespaceId() + "", contentVersion_.getPropertyUUID("namespaceId"), false);
+			conceptUtility_.addDescription(rootConcept, ns.getContentVersion().getReleaseDate().toString(), contentVersion_.getPropertyUUID("releaseDate"), false);
 			
 			storeConcept(rootConcept);
 
@@ -416,12 +416,12 @@ public class AllDTSToEConcepts extends AbstractMojo
 				{
 					if (pt instanceof PT_IDs)
 					{
-						conceptUtility_.addAdditionalIds(concept, property.getValue(), pt.getPropertyUUID(property.getName()));
+						conceptUtility_.addAdditionalIds(concept, property.getValue(), pt.getPropertyUUID(property.getName()), false);
 					}
 					else if (pt instanceof PT_Descriptions)
 					{
 						annotableAddedItem = conceptUtility_.addDescription(concept, 
-								pt.getPropertyUUID(property.getName()), property.getValue());
+								property.getValue(), pt.getPropertyUUID(property.getName()), false);
 					}
 					else if (pt instanceof PT_Skip)
 					{
@@ -431,7 +431,7 @@ public class AllDTSToEConcepts extends AbstractMojo
 					{
 						//annotation bucket
 						annotableAddedItem = conceptUtility_.addAnnotation(concept, property.getValue(), 
-								pt.getPropertyUUID(property.getName()));
+								pt.getPropertyUUID(property.getName()), false);
 					}
 				}
 				
@@ -447,7 +447,7 @@ public class AllDTSToEConcepts extends AbstractMojo
 					for (DTSQualifier qualifier : qualifiers )
 					{
 						conceptUtility_.addAnnotation(annotableAddedItem, qualifier.getValue(),
-								qualifiers_.getPropertyUUID(qualifier.getName()));
+								qualifiers_.getPropertyUUID(qualifier.getName()), false);
 					}
 				}
 			}
@@ -456,7 +456,7 @@ public class AllDTSToEConcepts extends AbstractMojo
 		//Load the synonyms
 		for (Synonym s : dtsConcept.getFetchedSynonyms())
 		{
-			conceptUtility_.addDescription(concept, propertyToPropertyType_.get("Synonym").getPropertyUUID("Synonym"), s.getTerm().getName());
+			conceptUtility_.addDescription(concept, s.getTerm().getName(), propertyToPropertyType_.get("Synonym").getPropertyUUID("Synonym"), false);
 		}
 		
 		//Load the associations
@@ -470,7 +470,7 @@ public class AllDTSToEConcepts extends AbstractMojo
 			for (DTSQualifier qualifier : qualifiers )
 			{
 				conceptUtility_.addAnnotation(relationship, qualifier.getValue(),
-						qualifiers_.getPropertyUUID(qualifier.getName()));
+						qualifiers_.getPropertyUUID(qualifier.getName()), false);
 			}
 		}
 		
@@ -506,7 +506,7 @@ public class AllDTSToEConcepts extends AbstractMojo
 					{
 						//See notes in PT_RelationQualifier to understand why the API is used differently in this case.
 						conceptUtility_.addAnnotation(addedRelationship, rm.getName(), 
-								relQualifiers_.getPropertyTypeUUID());
+								relQualifiers_.getPropertyTypeUUID(), false);
 					}
 				}
 			}
