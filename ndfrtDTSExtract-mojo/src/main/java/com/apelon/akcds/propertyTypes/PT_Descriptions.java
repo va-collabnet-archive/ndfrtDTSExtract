@@ -1,7 +1,6 @@
 package com.apelon.akcds.propertyTypes;
 
-import java.util.Arrays;
-import java.util.HashSet;
+import gov.va.oia.terminology.converters.sharedUtils.propertyTypes.BPT_Descriptions;
 /**
  * properties from the DTS ndf load which should be expressed as descriptions in the workbench.
  * 
@@ -11,12 +10,19 @@ import java.util.HashSet;
  * @author Daniel Armbrust
  *
  */
-public class PT_Descriptions extends PropertyType
+public class PT_Descriptions extends BPT_Descriptions
 {
 	public PT_Descriptions(String uuidRoot)
 	{
-		super(new HashSet<String>(Arrays.asList(new String[] {"MeSH_Name", "Print_Name", "RxNorm_Name", "VA_National_Formulary_Name", 
-				"Class_Description", "MeSH_Definition", "Synonym" })), "Description Types", uuidRoot);
+		super(uuidRoot);
+		addPropertyName("MeSH_Name");
+		addPropertyName("Print_Name");
+		addPropertyName("RxNorm_Name");
+		addPropertyName("VA_National_Formulary_Name");
+		addPropertyName("Class_Description");
+		addPropertyName("MeSH_Definition");
+		addPropertyName("Synonym");
+		addPropertyName("Display_Name");
 	}
 	
 	@Override

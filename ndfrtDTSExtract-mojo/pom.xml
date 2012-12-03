@@ -75,6 +75,11 @@
       <groupId>com.apelon.dts</groupId>
       <artifactId>xpp3</artifactId>
       <version>1</version>
-    </dependency>          
+    </dependency> 
+    <dependency>
+      <groupId>gov.va.oia.terminology.converters</groupId>
+      <artifactId>convertersCommonCode</artifactId>
+      <scope>compile</scope>
+    </dependency> 
   </dependencies>
 </project>

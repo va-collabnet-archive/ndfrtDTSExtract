@@ -12,7 +12,7 @@
     <artifactId>ndfrtDTSExtract-data</artifactId>
 	<packaging>pom</packaging>
 	<name>ndfrtDTSExtract-data</name>
-	<version>2012.10.01.12AA-build-1</version>
+	<version>2012.10.01.12AA-build-2</version>
 
 	<build>
 		<plugins>
