@@ -65,6 +65,16 @@ public class AllDTSToEConcepts extends AbstractMojo
 	 * @required
 	 */
 	private File outputDirectory;
+	
+	/**
+	 * Loader version number
+	 * Use parent because project.version pulls in the version of the data file, which I don't want.
+	 * 
+	 * @parameter expression="${project.parent.version}"
+	 * @required
+	 */
+	private String loaderVersion;
+	
 	private DataOutputStream dos_;
 	private DbConn dbConn_;
 	private EConceptUtility conceptUtility_;
@@ -179,6 +189,7 @@ public class AllDTSToEConcepts extends AbstractMojo
 			conceptUtility_.addStringAnnotation(rootConcept, ns.getContentVersion().getCode(), contentVersion_.getPropertyUUID("code"), false);
 			conceptUtility_.addStringAnnotation(rootConcept, ns.getContentVersion().getNamespaceId() + "", contentVersion_.getPropertyUUID("namespaceId"), false);
 			conceptUtility_.addStringAnnotation(rootConcept, ns.getContentVersion().getReleaseDate().toString(), contentVersion_.getPropertyUUID("releaseDate"), false);
+			conceptUtility_.addStringAnnotation(rootConcept, loaderVersion, contentVersion_.getPropertyUUID("loaderVersion"), false);
 			
 			storeConcept(rootConcept);
 

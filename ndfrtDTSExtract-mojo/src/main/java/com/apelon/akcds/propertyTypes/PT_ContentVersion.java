@@ -16,5 +16,6 @@ public class PT_ContentVersion extends BPT_ContentVersion
 		addPropertyName("code");
 		addPropertyName("namespaceId");
 		addPropertyName("releaseDate");
+		addPropertyName("loaderVersion");
 	}
 }
