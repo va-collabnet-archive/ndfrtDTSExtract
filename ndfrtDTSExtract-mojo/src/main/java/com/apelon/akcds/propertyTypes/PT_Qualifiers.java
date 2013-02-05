@@ -11,14 +11,14 @@ public class PT_Qualifiers extends BPT_Qualifiers
 	public PT_Qualifiers(String uuidRoot)
 	{
 		super(uuidRoot);
-		addPropertyName("FILE");
-		addPropertyName("Source");
-		addPropertyName("Strength");
-		addPropertyName("Unit");
-		addPropertyName("VA.IEN");
-		addPropertyName("VA_File");
-		addPropertyName("VA_IEN");
-		addPropertyName("VA_Status");
-		addPropertyName("VUID");
+		addProperty("FILE");
+		addProperty("Source");
+		addProperty("Strength");
+		addProperty("Unit");
+		addProperty("VA.IEN");
+		addProperty("VA_File");
+		addProperty("VA_IEN");
+		addProperty("VA_Status");
+		addProperty("VUID");
 	}
 }

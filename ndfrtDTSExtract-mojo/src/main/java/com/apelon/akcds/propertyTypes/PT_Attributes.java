@@ -11,19 +11,19 @@ public class PT_Attributes extends BPT_Attributes
 	public PT_Attributes(String uuidRoot)
 	{
 		super(uuidRoot);
-		addPropertyName("Level");
-		addPropertyName("Class_Code");
-		addPropertyName("CS_Federal_Schedule");
-		addPropertyName("Severity");
-		addPropertyName("Status");
-		addPropertyName("Strength");
-		addPropertyName("Units");
-		addPropertyName("VANDF_Record");
-		addPropertyName("RxNorm_CUI");
-		addPropertyName("FDA_UNII");
-		addPropertyName("UMLS_CUI");
-		addPropertyName("MeSH_CUI");
-		addPropertyName("MeSH_DUI");
-		addPropertyName("SNOMED_CID");
+		addProperty("Level");
+		addProperty("Class_Code");
+		addProperty("CS_Federal_Schedule");
+		addProperty("Severity");
+		addProperty("Status");
+		addProperty("Strength");
+		addProperty("Units");
+		addProperty("VANDF_Record");
+		addProperty("RxNorm_CUI");
+		addProperty("FDA_UNII");
+		addProperty("UMLS_CUI");
+		addProperty("MeSH_CUI");
+		addProperty("MeSH_DUI");
+		addProperty("SNOMED_CID");
 	}
 }

@@ -11,7 +11,7 @@ public class PT_IDs extends BPT_IDs
 	public PT_IDs(String uuidRoot)
 	{
 		super(uuidRoot);
-		addPropertyName("NUI");
-		addPropertyName("VUID");
+		addProperty("NUI");
+		addProperty("VUID");
 	}
 }

@@ -11,10 +11,10 @@ public class PT_Relations extends BPT_Relations
 	public PT_Relations(String uuidRoot)
 	{
 		super(uuidRoot);
-		addPropertyName("Heading_Mapped_To");
-		addPropertyName("Ingredient_1");
-		addPropertyName("Ingredient_2");
-		addPropertyName("Product_Component");
-		addPropertyName("Product_Component-2");
+		addProperty("Heading_Mapped_To");
+		addProperty("Ingredient_1");
+		addProperty("Ingredient_2");
+		addProperty("Product_Component");
+		addProperty("Product_Component-2");
 	}
 }

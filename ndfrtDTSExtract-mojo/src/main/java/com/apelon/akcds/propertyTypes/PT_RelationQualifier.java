@@ -17,14 +17,14 @@ public class PT_RelationQualifier extends PropertyType
 		//I add them here in what would typically be the 'name' list, but the names are not used in the implementation.  I'm only adding
 		//them to make them automatically show up in the metadata section.
 		super("Relation Qualifiers", uuidRoot);
-		addPropertyName("all");
-		addPropertyName("some");
-		addPropertyName("poss");
-		addPropertyName("notall");
-		addPropertyName("notsome");
-		addPropertyName("somenot");
-		addPropertyName("allnot");
-		addPropertyName("someor");
-		addPropertyName("allor");
+		addProperty("all");
+		addProperty("some");
+		addProperty("poss");
+		addProperty("notall");
+		addProperty("notsome");
+		addProperty("somenot");
+		addProperty("allnot");
+		addProperty("someor");
+		addProperty("allor");
 	}
 }
