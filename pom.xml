@@ -71,7 +71,7 @@
   </build>
 
   <modules>
-    <module>ndfrtDTSExtract-data</module>
+    <module>ndfrtDTSExtract-econcept</module>
     <module>ndfrtDTSExtract-mojo</module>
   </modules>
 </project>

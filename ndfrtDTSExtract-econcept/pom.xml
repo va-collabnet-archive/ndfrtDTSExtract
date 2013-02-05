@@ -9,9 +9,9 @@
 		<version>1.4</version>
 	</parent>
 	
-    <artifactId>ndfrtDTSExtract-data</artifactId>
+    <artifactId>ndfrtDTSExtract-econcept</artifactId>
 	<packaging>pom</packaging>
-	<name>ndfrtDTSExtract-data</name>
+	<name>ndfrtDTSExtract-econcept</name>
     <!-- this should be set to ${sourceData.version}-loader-${project.parent.version} but that doesn't appease the maven gods that know best.... -->
     <version>2012.10.01.12AA-loader-1.4</version>
     
