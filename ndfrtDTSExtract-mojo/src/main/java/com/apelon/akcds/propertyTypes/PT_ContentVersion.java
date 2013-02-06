@@ -11,7 +11,7 @@ public class PT_ContentVersion extends BPT_ContentVersion
 {
     public enum ContentVersion
     {
-        NAME("Name"), ID("ID"), CODE("Code"), NAMESPACE_ID("Namespace ID");
+        NAME("Name"), ID("ID"), CODE("Code"), NAMESPACE_ID("Namespace ID"), RELEASE_DATE("Release Date");
 
         private Property property;
         private ContentVersion(String niceName)

@@ -77,6 +77,14 @@ public class AllDTSToEConcepts extends AbstractMojo
 	 */
 	private String loaderVersion;
 	
+	/**
+     * Content version number
+     * 
+     * @parameter expression="${project.version}"
+     * @required
+     */
+    private String releaseVersion;
+	
 	private DataOutputStream dos_;
 	private DbConn dbConn_;
 	private EConceptUtility conceptUtility_;
@@ -192,8 +200,9 @@ public class AllDTSToEConcepts extends AbstractMojo
 			conceptUtility_.addStringAnnotation(rootConcept, ns.getContentVersion().getId() + "", ContentVersion.ID.getProperty().getUUID(), false);
 			conceptUtility_.addStringAnnotation(rootConcept, ns.getContentVersion().getCode(), ContentVersion.CODE.getProperty().getUUID(), false);
 			conceptUtility_.addStringAnnotation(rootConcept, ns.getContentVersion().getNamespaceId() + "", ContentVersion.NAMESPACE_ID.getProperty().getUUID(), false);
-			conceptUtility_.addStringAnnotation(rootConcept, ns.getContentVersion().getReleaseDate().toString(), BaseContentVersion.RELEASE.getProperty().getUUID(), false);
+			conceptUtility_.addStringAnnotation(rootConcept, ns.getContentVersion().getReleaseDate().toString(), ContentVersion.RELEASE_DATE.getProperty().getUUID(), false);
 			conceptUtility_.addStringAnnotation(rootConcept, loaderVersion, BaseContentVersion.LOADER_VERSION.getProperty().getUUID(), false);
+			conceptUtility_.addStringAnnotation(rootConcept, releaseVersion, BaseContentVersion.RELEASE.getProperty().getUUID(), false);
 			
 			storeConcept(rootConcept);
 
