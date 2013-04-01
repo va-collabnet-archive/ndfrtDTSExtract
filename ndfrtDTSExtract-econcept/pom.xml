@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" 
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
@@ -8,20 +7,20 @@
 		<artifactId>ndfrtDTSExtract</artifactId>
 		<version>1.4</version>
 	</parent>
-	
-    <artifactId>ndfrtDTSExtract-econcept</artifactId>
+
+	<artifactId>ndfrtDTSExtract-econcept</artifactId>
 	<packaging>pom</packaging>
 	<name>ndfrtDTSExtract-econcept</name>
     <!-- this should be set to ${sourceData.version}-loader-${project.parent.version} but that doesn't appease the maven gods that know best.... -->
-    <version>2012.10.01.12AA-loader-1.4</version>
-    
-    <properties>
-        <sourceData.version>2012.10.01.12AA</sourceData.version>
-    </properties>
+	<version>2013.02.04.12AB-loader-1.4</version>
+
+	<properties>
+		<sourceData.version>2013.02.04.12AB</sourceData.version>
+	</properties>
 
 	<build>
 		<plugins>
-		    <plugin>
+			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-assembly-plugin</artifactId>
 				<executions>
@@ -42,7 +41,7 @@
 			<plugin>
 				<groupId>${project.groupId}</groupId>
 				<artifactId>ndfrtDTSExtract-mojo</artifactId>
-                <version>${project.parent.version}</version>
+				<version>${project.parent.version}</version>
 				<executions>
 					<execution>
 						<id>genereate-jbin</id>
