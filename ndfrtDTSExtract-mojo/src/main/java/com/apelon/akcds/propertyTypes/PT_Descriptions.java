@@ -14,14 +14,14 @@ public class PT_Descriptions extends BPT_Descriptions
 {
 	public PT_Descriptions(String uuidRoot)
 	{
-		super(uuidRoot);
-		addProperty("MeSH_Name", "MeSH Name");
-		addProperty("Print_Name", "Print Name");
-		addProperty("RxNorm_Name");
-		addProperty("VA_National_Formulary_Name", "VA National Formulary Name");
-		addProperty("Class_Description", "Class Description");
-		addProperty("MeSH_Definition", "MeSH Definition");
-		addProperty("Synonym");
-		addProperty("Display_Name");
+		super(uuidRoot, "NDF-RT");
+		addProperty("MeSH_Name", "MeSH Name", null, false, SYNONYM);
+		addProperty("Print_Name", "Print Name", null, false, SYNONYM);
+		addProperty("RxNorm_Name", "RxNorm Name", null, false, SYNONYM);
+		addProperty("VA_National_Formulary_Name", "VA National Formulary Name", null, false, SYNONYM);
+		addProperty("Class_Description", "Class Description", null, false, DEFINITION);
+		addProperty("MeSH_Definition", "MeSH Definition", null, false, DEFINITION);
+		addProperty("Synonym", SYNONYM);
+		addProperty("Display_Name", "Display Name", null, false, FSN);
 	}
 }

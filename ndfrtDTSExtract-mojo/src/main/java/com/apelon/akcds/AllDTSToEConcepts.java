@@ -2,9 +2,12 @@ package com.apelon.akcds;
 
 import gov.va.oia.terminology.converters.sharedUtils.ConsoleUtil;
 import gov.va.oia.terminology.converters.sharedUtils.EConceptUtility;
+import gov.va.oia.terminology.converters.sharedUtils.EConceptUtility.DescriptionType;
 import gov.va.oia.terminology.converters.sharedUtils.propertyTypes.BPT_ContentVersion.BaseContentVersion;
 import gov.va.oia.terminology.converters.sharedUtils.propertyTypes.BPT_Skip;
+import gov.va.oia.terminology.converters.sharedUtils.propertyTypes.Property;
 import gov.va.oia.terminology.converters.sharedUtils.propertyTypes.PropertyType;
+import gov.va.oia.terminology.converters.sharedUtils.propertyTypes.ValuePropertyPair;
 import gov.va.oia.terminology.converters.sharedUtils.stats.ConverterUUID;
 import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
@@ -14,6 +17,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.UUID;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
@@ -22,7 +26,8 @@ import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.dwfa.cement.ArchitectonicAuxiliary;
 import org.ihtsdo.etypes.EConcept;
-import org.ihtsdo.tk.dto.concept.component.TkComponent;
+import org.ihtsdo.tk.dto.concept.component.description.TkDescription;
+import org.ihtsdo.tk.dto.concept.component.refex.type_string.TkRefsetStrMember;
 import org.ihtsdo.tk.dto.concept.component.relationship.TkRelationship;
 import com.apelon.akcds.propertyTypes.PT_Attributes;
 import com.apelon.akcds.propertyTypes.PT_ContentVersion;
@@ -196,8 +201,8 @@ public class AllDTSToEConcepts extends AbstractMojo
 			// Create the root concept
 			EConcept rootConcept = conceptUtility_.createConcept(ConverterUUID.nameUUIDFromBytes((uuidRoot_ + ":root").getBytes()),
 					"National Drug File Reference Terminology");
-			conceptUtility_.addSynonym(rootConcept, "NDF-RT", true, null);
-			conceptUtility_.addSynonym(rootConcept, "NDFRT", false, null);
+			conceptUtility_.addDescription(rootConcept, "NDF-RT", DescriptionType.SYNONYM, true, null, null, false);
+			conceptUtility_.addDescription(rootConcept, "NDFRT", DescriptionType.SYNONYM, false, null, null, false);
 			conceptUtility_.addStringAnnotation(rootConcept, ns.getContentVersion().getName(), ContentVersion.NAME.getProperty().getUUID(), false);
 			conceptUtility_.addStringAnnotation(rootConcept, ns.getContentVersion().getId() + "", ContentVersion.ID.getProperty().getUUID(), false);
 			conceptUtility_.addStringAnnotation(rootConcept, ns.getContentVersion().getCode(), ContentVersion.CODE.getProperty().getUUID(), false);
@@ -407,15 +412,15 @@ public class AllDTSToEConcepts extends AbstractMojo
 	 */
 	private UUID writeNDFRTEConcept(DTSConcept dtsConcept, UUID primordial, UUID parentPrimordial, OntylogConcept[] parents, DTSRole[] infRoles) throws Exception
 	{
-		EConcept concept = conceptUtility_.createConcept(primordial, getPropValue(dtsConcept, "Display_Name"));
+		EConcept concept = conceptUtility_.createConcept(primordial);
 
+		ArrayList<ValuePropertyPairExtension> descriptions = new ArrayList<>();
+		
 		// Property Handling
 		for (DTSProperty property : dtsConcept.getFetchedProperties())
 		{
 			if (property.getValue() != null)
 			{
-				TkComponent<?> annotableAddedItem = null;
-
 				PropertyType pt = propertyToPropertyType_.get(property.getName());
 				if (pt == null)
 				{
@@ -429,7 +434,7 @@ public class AllDTSToEConcepts extends AbstractMojo
 					}
 					else if (pt instanceof PT_Descriptions)
 					{
-						annotableAddedItem = conceptUtility_.addDescription(concept, property.getValue(), pt.getProperty(property.getName()).getUUID(), false);
+						descriptions.add(new ValuePropertyPairExtension(property.getValue(), pt.getProperty(property.getName()), property));
 					}
 					else if (pt instanceof BPT_Skip)
 					{
@@ -438,22 +443,12 @@ public class AllDTSToEConcepts extends AbstractMojo
 					else
 					{
 						// annotation bucket
-						annotableAddedItem = conceptUtility_.addStringAnnotation(concept, property.getValue(), pt.getProperty(property.getName()).getUUID(), false);
-					}
-				}
-
-				// Any qualifiers that need to be added to the property?
-
-				DTSQualifier[] qualifiers = property.getFetchedQualifiers();
-				if (annotableAddedItem == null && qualifiers.length > 0)
-				{
-					ConsoleUtil.printErrorln("ERROR: Design flaw - qualifier found on type that was loaded as non-qualifiable!");
-				}
-				if (annotableAddedItem != null)
-				{
-					for (DTSQualifier qualifier : qualifiers)
-					{
-						conceptUtility_.addStringAnnotation(annotableAddedItem, qualifier.getValue(), qualifiers_.getProperty(qualifier.getName()).getUUID(), false);
+						TkRefsetStrMember annotation = conceptUtility_.addStringAnnotation(concept, property.getValue(), pt.getProperty(property.getName()).getUUID(), false);
+						DTSQualifier[] qualifiers = property.getFetchedQualifiers();
+						for (DTSQualifier qualifier : qualifiers)
+						{
+							conceptUtility_.addStringAnnotation(annotation, qualifier.getValue(), qualifiers_.getProperty(qualifier.getName()).getUUID(), false);
+						}
 					}
 				}
 			}
@@ -462,7 +457,25 @@ public class AllDTSToEConcepts extends AbstractMojo
 		// Load the synonyms
 		for (Synonym s : dtsConcept.getFetchedSynonyms())
 		{
-			conceptUtility_.addDescription(concept, s.getTerm().getName(), propertyToPropertyType_.get("Synonym").getProperty("Synonym").getUUID(), false);
+			descriptions.add(new ValuePropertyPairExtension(s.getTerm().getName(),propertyToPropertyType_.get("Synonym").getProperty("Synonym"), null));
+		}
+		
+		//Now that we have gathered all of the description, actually load them.
+		List<TkDescription> addedDescriptions = conceptUtility_.addDescriptions(concept, descriptions);
+		
+		//And then add any qualifiers that are necessary
+		for (int i = 0; i < descriptions.size(); i++)
+		{
+			TkDescription wbDesc = addedDescriptions.get(i);
+			ValuePropertyPairExtension vpp = descriptions.get(i);
+			if (vpp.getDTSProperty() != null)
+			{
+				DTSQualifier[] qualifiers = vpp.getDTSProperty().getFetchedQualifiers();
+				for (DTSQualifier qualifier : qualifiers)
+				{
+					conceptUtility_.addStringAnnotation(wbDesc, qualifier.getValue(), qualifiers_.getProperty(qualifier.getName()).getUUID(), false);
+				}
+			}
 		}
 
 		// Load the associations
@@ -489,12 +502,12 @@ public class AllDTSToEConcepts extends AbstractMojo
 				for (int i = 0; i < parents.length; i++)
 				{
 					UUID foundParentPrimordial = buildUUIDFromNUI(getNUIForCode(parents[i].getCode()));
-					conceptUtility_.addRelationship(concept, foundParentPrimordial, null, null);
+					conceptUtility_.addRelationship(concept, foundParentPrimordial);
 				}
 			}
 			else if (parentPrimordial != null)
 			{
-				conceptUtility_.addRelationship(concept, parentPrimordial, null, null);
+				conceptUtility_.addRelationship(concept, parentPrimordial);
 			}
 
 			// Also load any other roles that were passed in.
@@ -585,6 +598,21 @@ public class AllDTSToEConcepts extends AbstractMojo
 		if ((conceptCount % 1000) == 0)
 		{
 			ConsoleUtil.println("Processed: " + conceptCount + " - just completed " + concept.getDescriptions().get(0).getText());
+		}
+	}
+	
+	private class ValuePropertyPairExtension extends ValuePropertyPair
+	{
+		private DTSProperty dtsProperty_;
+		public ValuePropertyPairExtension(String value, Property property, DTSProperty dtsProperty)
+		{
+			super(value, property);
+			dtsProperty_ = dtsProperty;
+		}
+		
+		public DTSProperty getDTSProperty()
+		{
+			return dtsProperty_;
 		}
 	}
 }
