@@ -8,9 +8,9 @@ import gov.va.oia.terminology.converters.sharedUtils.propertyTypes.BPT_Qualifier
  */
 public class PT_Qualifiers extends BPT_Qualifiers
 {
-	public PT_Qualifiers(String uuidRoot)
+	public PT_Qualifiers()
 	{
-		super(uuidRoot);
+		super();
 		addProperty("FILE");
 		addProperty("Source");
 		addProperty("Strength");

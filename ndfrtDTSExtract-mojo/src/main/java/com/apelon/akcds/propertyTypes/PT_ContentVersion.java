@@ -32,9 +32,9 @@ public class PT_ContentVersion extends BPT_ContentVersion
 		}
 	}
 
-	public PT_ContentVersion(String uuidRoot)
+	public PT_ContentVersion()
 	{
-		super(uuidRoot);
+		super();
 		for (ContentVersion cv : ContentVersion.values())
 		{
 			addProperty(cv.getProperty());

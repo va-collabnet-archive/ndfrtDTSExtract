@@ -8,9 +8,9 @@ import gov.va.oia.terminology.converters.sharedUtils.propertyTypes.BPT_Relations
  */
 public class PT_Relations extends BPT_Relations
 {
-	public PT_Relations(String uuidRoot)
+	public PT_Relations()
 	{
-		super(uuidRoot, "NDF-RT");
+		super("NDF-RT");
 		addProperty("Heading_Mapped_To");
 		addProperty("Ingredient_1");
 		addProperty("Ingredient_2");

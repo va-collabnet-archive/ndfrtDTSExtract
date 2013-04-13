@@ -8,9 +8,9 @@ import gov.va.oia.terminology.converters.sharedUtils.propertyTypes.BPT_Attribute
  */
 public class PT_Attributes extends BPT_Attributes
 {
-	public PT_Attributes(String uuidRoot)
+	public PT_Attributes()
 	{
-		super(uuidRoot);
+		super();
 		addProperty("Level");
 		addProperty("Class_Code");
 		addProperty("CS_Federal_Schedule");

@@ -95,17 +95,17 @@ public class AllDTSToEConcepts extends AbstractMojo
 	private DbConn dbConn_;
 	private EConceptUtility conceptUtility_;
 
-	private final String uuidRoot_ = "gov.va.med.term.ndfrt:";
+	private final String ndfrtNamespaceBaseSeed = "gov.va.med.term.ndfrt:";
 
 	// Want a specific handle to this one - adhoc usage.
-	private final PropertyType contentVersion_ = new PT_ContentVersion(uuidRoot_);
+	private PropertyType contentVersion_;
 
 	private final ArrayList<PropertyType> propertyTypes_ = new ArrayList<PropertyType>();
 
 	// These are slightly different than the property types, have special handling - so they are not added to the propertyTypes_ list.
-	private final PT_Qualifiers qualifiers_ = new PT_Qualifiers(uuidRoot_);
-	private final PT_Relations relations_ = new PT_Relations(uuidRoot_);
-	private final PT_RelationQualifier relQualifiers_ = new PT_RelationQualifier(uuidRoot_);
+	private PT_Qualifiers qualifiers_;
+	private PT_Relations relations_;
+	private PT_RelationQualifier relQualifiers_;
 
 	// Various caches for performance reasons
 	private Hashtable<String, String> codeToNUICache_ = new Hashtable<String, String>();
@@ -114,17 +114,6 @@ public class AllDTSToEConcepts extends AbstractMojo
 	private Hashtable<String, PropertyType> propertyToPropertyType_ = new Hashtable<String, PropertyType>();
 
 	private EConcept ndfrtRefsetConcept;
-
-	public AllDTSToEConcepts()
-	{
-		// This could be one nice, neat line of code in the class init section. But maven is broken and can't parse valid java.
-		// Sigh. Broken up to appease the maven gods.
-
-		propertyTypes_.add(new PT_IDs(uuidRoot_));
-		propertyTypes_.add(new PT_Attributes(uuidRoot_));
-		propertyTypes_.add(new PT_Descriptions(uuidRoot_));
-		propertyTypes_.add(contentVersion_);
-	}
 
 	/**
 	 * Used for debug. Sets up the same paths that maven would use.... allow the code to be run standalone.
@@ -151,7 +140,20 @@ public class AllDTSToEConcepts extends AbstractMojo
 
 			File binaryOutputFile = new File(outputDirectory, "ndfrtEConcepts.jbin");
 			dos_ = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(binaryOutputFile)));
-			conceptUtility_ = new EConceptUtility(uuidRoot_, "NDFRT Path", dos_);
+			conceptUtility_ = new EConceptUtility(ndfrtNamespaceBaseSeed, "NDFRT Path", dos_);
+			
+			propertyTypes_.add(new PT_IDs());
+			propertyTypes_.add(new PT_Attributes());
+			propertyTypes_.add(new PT_Descriptions());
+			propertyTypes_.add(contentVersion_);
+			
+			// Want a specific handle to this one - adhoc usage.
+			contentVersion_ = new PT_ContentVersion();
+
+			// These are slightly different than the property types, have special handling - so they are not added to the propertyTypes_ list.
+			qualifiers_ = new PT_Qualifiers();
+			relations_ = new PT_Relations();
+			relQualifiers_ = new PT_RelationQualifier();
 
 			// Connect to DTS
 			dbConn_ = new DbConn();
@@ -164,7 +166,7 @@ public class AllDTSToEConcepts extends AbstractMojo
 
 			// Set up a meta-data root concept
 			UUID archRoot = ArchitectonicAuxiliary.Concept.ARCHITECTONIC_ROOT_CONCEPT.getPrimoridalUid();
-			UUID metaDataRoot = ConverterUUID.nameUUIDFromBytes((uuidRoot_ + ":metadata").getBytes());
+			UUID metaDataRoot = ConverterUUID.createNamespaceUUIDFromString("metadata");
 			conceptUtility_.createAndStoreMetaDataConcept(metaDataRoot, "NDF-RT Metadata", archRoot, dos_);
 
 			// Load the roles found in DTS into our relations structure
@@ -199,8 +201,7 @@ public class AllDTSToEConcepts extends AbstractMojo
 			checkForLeftoverPropertyTypes();
 
 			// Create the root concept
-			EConcept rootConcept = conceptUtility_.createConcept(ConverterUUID.nameUUIDFromBytes((uuidRoot_ + ":root").getBytes()),
-					"National Drug File Reference Terminology");
+			EConcept rootConcept = conceptUtility_.createConcept("National Drug File Reference Terminology");
 			conceptUtility_.addDescription(rootConcept, "NDF-RT", DescriptionType.SYNONYM, true, null, null, false);
 			conceptUtility_.addDescription(rootConcept, "NDFRT", DescriptionType.SYNONYM, false, null, null, false);
 			conceptUtility_.addStringAnnotation(rootConcept, ns.getContentVersion().getName(), ContentVersion.NAME.getProperty().getUUID(), false);
@@ -540,7 +541,7 @@ public class AllDTSToEConcepts extends AbstractMojo
 	 */
 	private UUID buildUUIDFromNUI(String nui)
 	{
-		return ConverterUUID.nameUUIDFromBytes((uuidRoot_ + ":" + nui).getBytes());
+		return ConverterUUID.createNamespaceUUIDFromString(nui);
 	}
 
 	/**

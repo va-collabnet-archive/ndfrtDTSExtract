@@ -12,9 +12,9 @@ import gov.va.oia.terminology.converters.sharedUtils.propertyTypes.BPT_Descripti
  */
 public class PT_Descriptions extends BPT_Descriptions
 {
-	public PT_Descriptions(String uuidRoot)
+	public PT_Descriptions()
 	{
-		super(uuidRoot, "NDF-RT");
+		super("NDF-RT");
 		addProperty("MeSH_Name", "MeSH Name", null, false, SYNONYM);
 		addProperty("Print_Name", "Print Name", null, false, SYNONYM);
 		addProperty("RxNorm_Name", "RxNorm Name", null, false, SYNONYM);
