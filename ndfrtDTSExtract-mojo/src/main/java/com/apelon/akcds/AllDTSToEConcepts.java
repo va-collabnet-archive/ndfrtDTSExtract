@@ -142,14 +142,14 @@ public class AllDTSToEConcepts extends AbstractMojo
 			dos_ = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(binaryOutputFile)));
 			conceptUtility_ = new EConceptUtility(ndfrtNamespaceBaseSeed, "NDFRT Path", dos_);
 			
+			// Want a specific handle to this one - adhoc usage.
+			contentVersion_ = new PT_ContentVersion();
+			
 			propertyTypes_.add(new PT_IDs());
 			propertyTypes_.add(new PT_Attributes());
 			propertyTypes_.add(new PT_Descriptions());
 			propertyTypes_.add(contentVersion_);
 			
-			// Want a specific handle to this one - adhoc usage.
-			contentVersion_ = new PT_ContentVersion();
-
 			// These are slightly different than the property types, have special handling - so they are not added to the propertyTypes_ list.
 			qualifiers_ = new PT_Qualifiers();
 			relations_ = new PT_Relations();
