@@ -35,6 +35,7 @@ import com.apelon.akcds.propertyTypes.PT_ContentVersion.ContentVersion;
 import com.apelon.akcds.propertyTypes.PT_Descriptions;
 import com.apelon.akcds.propertyTypes.PT_IDs;
 import com.apelon.akcds.propertyTypes.PT_Qualifiers;
+import com.apelon.akcds.propertyTypes.PT_Refsets;
 import com.apelon.akcds.propertyTypes.PT_RelationQualifier;
 import com.apelon.akcds.propertyTypes.PT_Relations;
 import com.apelon.dts.client.DTSException;
@@ -154,6 +155,8 @@ public class AllDTSToEConcepts extends AbstractMojo
 			qualifiers_ = new PT_Qualifiers();
 			relations_ = new PT_Relations();
 			relQualifiers_ = new PT_RelationQualifier();
+			PT_Refsets refsets = new PT_Refsets();
+			propertyTypes_.add(refsets);
 
 			// Connect to DTS
 			dbConn_ = new DbConn();
@@ -217,11 +220,8 @@ public class AllDTSToEConcepts extends AbstractMojo
 
 			UUID rootPrimordial = rootConcept.getPrimordialUuid();
 
-			EConcept vaRefsetsConcept = conceptUtility_.createVARefsetRootConcept();
-			storeConcept(vaRefsetsConcept);
-
 			// store this later
-			ndfrtRefsetConcept = conceptUtility_.createConcept("All NDF-RT Concepts", vaRefsetsConcept.getPrimordialUuid());
+			ndfrtRefsetConcept = refsets.getConcept(PT_Refsets.Refsets.ALL.getProperty());
 
 			ConsoleUtil.println("");
 			ConsoleUtil.println("Metadata summary:");
@@ -234,7 +234,7 @@ public class AllDTSToEConcepts extends AbstractMojo
 			// Load the data
 			createAllConcepts(rootPrimordial);
 
-			ndfrtRefsetConcept.writeExternal(dos_);
+			conceptUtility_.storeRefsetConcepts(refsets, dos_);
 
 			ConsoleUtil.println("");
 			ConsoleUtil.println("Data Load Summary:");
@@ -529,7 +529,7 @@ public class AllDTSToEConcepts extends AbstractMojo
 			}
 		}
 
-		conceptUtility_.addRefsetMember(ndfrtRefsetConcept, concept.getPrimordialUuid(), true, null);
+		conceptUtility_.addRefsetMember(ndfrtRefsetConcept, concept.getPrimordialUuid(), null, true, null);
 
 		// Store the final EConcept.
 		storeConcept(concept);
