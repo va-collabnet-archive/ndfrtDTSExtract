@@ -1,0 +1,223 @@
+Connected to Oracle Database [user=dtsNDFRTmstr, host=localhost, instance=ORCL]
+--------------------------------------------------------------------
+
+Namespace: 
+Name="NDF-RT2 [Public Edition]", id=77, code=NDF-RT2 Public, referenceBy=I, auth_id=8, type=O, permission=F, isLocal=F, hasSemanticType=F
+    Where authority = "U.S. Department of Veterans Affairs (VA)"
+    * Versions : 
+        2009.01.13.8AB [2009-01-16 13:24:23.0]
+        2009.02.10.8AB [2009-02-11 13:15:21.0]
+        2009.03.10.8AB [2009-03-13 10:42:58.0]
+        2009.04.14.9AA [2009-04-21 12:12:15.0]
+        2009.05.12.9AA [2009-05-19 11:09:14.0]
+        2009.06.09.9AA [2009-06-05 16:48:22.0]
+        2009.07.14.9AA [2009-07-09 14:18:53.0]
+        2009.09.08.9AA [2009-09-09 16:38:58.0]
+        2009.10.13.9AA [2009-10-20 13:25:37.0]
+        2009.11.10.9AB [2009-11-22 11:25:19.0]
+        2010.01.12.9AB [2010-01-14 14:09:09.0]
+        2010.02.09.9AB [2010-02-12 14:31:15.0]
+        2010.03.09.9AB [2010-03-08 11:03:06.0]
+        2010.04.13.9AB [2010-04-07 12:00:46.0]
+        2010.06.07.10AA [2010-06-03 11:23:04.0]
+        2010.07.06.10AA [2010-07-02 12:32:24.0]
+        2010.08.02.10AA [2010-07-29 12:39:19.0]
+        2010.09.07.10AA [2010-09-02 17:21:28.0]
+        2010.10.04.10AA [2010-09-30 16:50:59.0]
+        2010.11.01.10AA [2010-10-29 11:27:59.0]
+        2011.01.03.10AB [2010-12-31 15:33:15.0]
+        2011.02.07.10AB [2011-02-03 10:55:56.0]
+        2011.03.07.10AB [2011-03-03 16:04:54.0]
+        2011.04.04.10AB [2011-03-31 12:53:36.0]
+        2011.05.02.10AB [2011-04-28 13:26:56.0]
+        2011.06.06.10AB [2011-06-02 14:25:24.0]
+        2011.07.05.11AA [2011-06-29 16:43:56.0]
+        2011.08.01.11AA [2011-07-29 14:02:57.0]
+        2011.09.06.11AA [2011-09-01 12:29:42.0]
+        2011.10.03.11AA [2011-09-30 12:09:12.0]
+        2011.11.07.11AA [2011-11-03 15:35:07.0]
+        2012.01.03.11AB [2011-12-30 00:02:24.0]
+        2012.02.06.11AB [2012-02-02 14:57:20.0]
+        2012.03.05.11AB [2012-03-01 14:57:00.0]
+        2012.04.02.11AB [2012-03-30 10:02:25.0]
+        2012.05.07.11AB [2012-05-01 10:05:13.0]
+        2012.06.04.11AB [2012-05-31 16:04:12.0]
+        2012.07.02.12AA [2012-06-29 11:35:35.0]
+        2012.09.04.12AA [2012-08-30 09:41:46.0]
+        2012.10.01.12AA [2012-09-27 10:25:17.0]
+        2012.11.05.12AA [2012-11-02 10:06:47.0]
+        2013.01.07.12AB [2013-01-03 11:02:48.0]
+        2013.02.04.12AB [2013-01-31 14:00:53.0]
+    * Total concepts = 48843
+    * INTRA source associations : 
+        7305 [Ingredient_1]
+        7305 [Ingredient_2]
+        36782 [Product_Component]
+    * CROSS source associations ( FROM THIS NAMESPACE ):
+    * CROSS source associations ( TO THIS NAMESPACE ): 
+    * CROSS source associations ( STORED IN THIS NAMESPACE ): 
+    * INFERRED roles : 
+        2250 [CI_ChemClass]
+        674 [CI_MoA]
+        562 [CI_PE]
+        36386 [CI_with]
+        12 [effect_may_be_inhibited_by]
+        343 [has_Chemical_Structure]
+        12387 [has_DoseForm]
+        23630 [has_Ingredient]
+        15007 [has_MoA]
+        25823 [has_PE]
+        762 [has_PK]
+        73 [has_TC]
+        63 [has_active_metabolites]
+        714 [induces]
+        967 [may_diagnose]
+        6048 [may_prevent]
+        48298 [may_treat]
+        306 [site_of_metabolism]
+    * DEFINED roles : 
+        293 [CI_ChemClass]
+        81 [CI_MoA]
+        61 [CI_PE]
+        4464 [CI_with]
+        1 [effect_may_be_inhibited_by]
+        352 [has_Chemical_Structure]
+        12387 [has_DoseForm]
+        5814 [has_Ingredient]
+        2218 [has_MoA]
+        3407 [has_PE]
+        51 [has_PK]
+        73 [has_TC]
+        4 [has_active_metabolites]
+        135 [induces]
+        138 [may_diagnose]
+        803 [may_prevent]
+        5697 [may_treat]
+        25 [site_of_metabolism]
+    * Indexable properties : 
+        15924 [CS_Federal_Schedule]
+        486 [Class_Code]
+        48843 [Display_Name]
+        4150 [FDA_UNII]
+        23606 [Level]
+        14645 [MeSH_CUI]
+        14712 [MeSH_DUI]
+        14712 [MeSH_Name]
+        48843 [NUI]
+        12337 [Print_Name]
+        48862 [RxNorm_CUI]
+        4534 [SNOMED_CID]
+        7305 [Severity]
+        9949 [Strength]
+        48219 [UMLS_CUI]
+        9944 [Units]
+        33195 [VANDF_Record]
+        15944 [VA_National_Formulary_Name]
+        23610 [VUID]
+    * Searchable properties : 
+        20586 [RxNorm_Name]
+    * Big properties : 
+        31 [Class_Description]
+        12765 [MeSH_Definition]
+    * Total terms = 32704
+    * Term Associations : 
+    * Term Properties : 
+    * Term Association Qualfiers : 
+    * Term Property Qualfiers : 
+    * Concept Association Qualfiers : 
+        26181 [Strength]
+            * Attaches to :  [Product_Component]
+        27304 [Unit]
+            * Attaches to :  [Product_Component]
+        36805 [VA.IEN]
+            * Attaches to :  [Product_Component]
+    * Concept Indexable Property Qualfiers : 
+        33195 [VA_File]
+            * Attaches to :  [VANDF_Record]
+        33195 [VA_IEN]
+            * Attaches to :  [VANDF_Record]
+        33195 [VA_Status]
+            * Attaches to :  [VANDF_Record]
+    * Concept Searchable Property Qualfiers : 
+    * Concept Big Property Qualfiers : 
+    * Synonymous Term Associations : 
+        32704 [Synonym]
+
+Has [22] Property Types :
+     CS_Federal_Schedule
+     Class_Code
+     Class_Description
+     Display_Name
+     FDA_UNII
+     Level
+     MeSH_CUI
+     MeSH_DUI
+     MeSH_Definition
+     MeSH_Name
+     NUI
+     Print_Name
+     RxNorm_CUI
+     RxNorm_Name
+     SNOMED_CID
+     Severity
+     Strength
+     UMLS_CUI
+     Units
+     VANDF_Record
+     VA_National_Formulary_Name
+     VUID
+
+Has [5] Association Types :
+     Heading_Mapped_To
+     Ingredient_1
+     Ingredient_2
+     Product_Component
+     Synonym
+
+Has [9] Qualifier Types :
+     FILE
+     Source
+     Strength
+     Unit
+     VA.IEN
+     VA_File
+     VA_IEN
+     VA_Status
+     VUID
+
+Has [19] Role Types :
+     CI_ChemClass
+     CI_MoA
+     CI_PE
+     CI_with
+     effect_may_be_inhibited_by
+     has_Chemical_Structure
+     has_DoseForm
+     has_Ingredient
+     has_MoA
+     has_PE
+     has_PK
+     has_TC
+     has_active_metabolites
+     induces
+     may_diagnose
+     may_prevent
+     may_treat
+     metabolized_by
+     site_of_metabolism
+
+Has [9] Kind Types :
+     DISEASE_KIND
+     DOSE_FORM_KIND
+     DRUG_INTERACTION_KIND
+     DRUG_KIND
+     INGREDIENT_KIND
+     MECHANISM_OF_ACTION_KIND
+     PHARMACOKINETICS_KIND
+     PHYSIOLOGIC_EFFECT_KIND
+     THERAPEUTIC_CATEGORY_KIND
+
+Has [292075] DIRECT_SUPS_PLUS rows 
+
+Has [128220] NS1 rows 
+
