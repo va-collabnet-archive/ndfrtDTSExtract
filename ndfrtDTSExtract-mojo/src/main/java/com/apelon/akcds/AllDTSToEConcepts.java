@@ -541,7 +541,7 @@ public class AllDTSToEConcepts extends AbstractMojo
 	 */
 	private UUID buildUUIDFromNUI(String nui)
 	{
-		return ConverterUUID.createNamespaceUUIDFromString(nui);
+		return ConverterUUID.createNamespaceUUIDFromString(nui, true);
 	}
 
 	/**
