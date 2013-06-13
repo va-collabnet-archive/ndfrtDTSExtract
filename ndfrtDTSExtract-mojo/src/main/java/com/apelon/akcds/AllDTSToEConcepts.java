@@ -170,7 +170,7 @@ public class AllDTSToEConcepts extends AbstractMojo
 			// Set up a meta-data root concept
 			UUID archRoot = ArchitectonicAuxiliary.Concept.ARCHITECTONIC_ROOT_CONCEPT.getPrimoridalUid();
 			UUID metaDataRoot = ConverterUUID.createNamespaceUUIDFromString("metadata");
-			conceptUtility_.createAndStoreMetaDataConcept(metaDataRoot, "NDF-RT Metadata", archRoot, dos_);
+			conceptUtility_.createAndStoreMetaDataConcept(metaDataRoot, "NDF-RT Metadata", false, archRoot, dos_);
 
 			// Load the roles found in DTS into our relations structure
 			DTSRoleType[] roleTypes = dbConn_.ontQry.getRoleTypes(dbConn_.getNamespace());
