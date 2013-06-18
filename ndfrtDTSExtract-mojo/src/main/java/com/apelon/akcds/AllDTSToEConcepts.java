@@ -204,8 +204,9 @@ public class AllDTSToEConcepts extends AbstractMojo
 			checkForLeftoverPropertyTypes();
 
 			// Create the root concept
-			EConcept rootConcept = conceptUtility_.createConcept("National Drug File Reference Terminology");
+			EConcept rootConcept = conceptUtility_.createConcept("NDF-RT");
 			conceptUtility_.addDescription(rootConcept, "NDF-RT", DescriptionType.SYNONYM, true, null, null, false);
+			conceptUtility_.addDescription(rootConcept, "National Drug File Reference Terminology", DescriptionType.SYNONYM, false, null, null, false);
 			conceptUtility_.addDescription(rootConcept, "NDFRT", DescriptionType.SYNONYM, false, null, null, false);
 			conceptUtility_.addStringAnnotation(rootConcept, ns.getContentVersion().getName(), ContentVersion.NAME.getProperty().getUUID(), false);
 			conceptUtility_.addStringAnnotation(rootConcept, ns.getContentVersion().getId() + "", ContentVersion.ID.getProperty().getUUID(), false);
