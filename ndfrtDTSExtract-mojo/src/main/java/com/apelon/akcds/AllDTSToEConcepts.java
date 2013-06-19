@@ -208,6 +208,7 @@ public class AllDTSToEConcepts extends AbstractMojo
 			conceptUtility_.addDescription(rootConcept, "NDF-RT", DescriptionType.SYNONYM, true, null, null, false);
 			conceptUtility_.addDescription(rootConcept, "National Drug File Reference Terminology", DescriptionType.SYNONYM, false, null, null, false);
 			conceptUtility_.addDescription(rootConcept, "NDFRT", DescriptionType.SYNONYM, false, null, null, false);
+			ConsoleUtil.println("Root concept FSN is 'NDF-RT' and the UUID is " + rootConcept.getPrimordialUuid());
 			conceptUtility_.addStringAnnotation(rootConcept, ns.getContentVersion().getName(), ContentVersion.NAME.getProperty().getUUID(), false);
 			conceptUtility_.addStringAnnotation(rootConcept, ns.getContentVersion().getId() + "", ContentVersion.ID.getProperty().getUUID(), false);
 			conceptUtility_.addStringAnnotation(rootConcept, ns.getContentVersion().getCode(), ContentVersion.CODE.getProperty().getUUID(), false);
