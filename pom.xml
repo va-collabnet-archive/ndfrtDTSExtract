@@ -5,7 +5,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>gov.va.oia.terminology.converters</groupId>
 	<artifactId>ndfrtDTSExtract</artifactId>
-	<version>2.2-SNAPSHOT</version>
+	<version>2.2</version>
 	<name>ndfrtDTSExtract</name>
 	<packaging>pom</packaging>
 
