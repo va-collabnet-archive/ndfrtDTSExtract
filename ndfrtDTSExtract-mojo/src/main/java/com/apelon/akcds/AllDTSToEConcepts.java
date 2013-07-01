@@ -3,7 +3,6 @@ package com.apelon.akcds;
 import gov.va.oia.terminology.converters.sharedUtils.ConsoleUtil;
 import gov.va.oia.terminology.converters.sharedUtils.EConceptUtility;
 import gov.va.oia.terminology.converters.sharedUtils.EConceptUtility.DescriptionType;
-import gov.va.oia.terminology.converters.sharedUtils.propertyTypes.BPT_ContentVersion.BaseContentVersion;
 import gov.va.oia.terminology.converters.sharedUtils.propertyTypes.BPT_Skip;
 import gov.va.oia.terminology.converters.sharedUtils.propertyTypes.Property;
 import gov.va.oia.terminology.converters.sharedUtils.propertyTypes.PropertyType;
@@ -99,7 +98,7 @@ public class AllDTSToEConcepts extends AbstractMojo
 	private final String ndfrtNamespaceBaseSeed = "gov.va.med.term.ndfrt:";
 
 	// Want a specific handle to this one - adhoc usage.
-	private PropertyType contentVersion_;
+	private PT_ContentVersion contentVersion_;
 
 	private final ArrayList<PropertyType> propertyTypes_ = new ArrayList<PropertyType>();
 
@@ -215,8 +214,8 @@ public class AllDTSToEConcepts extends AbstractMojo
 			conceptUtility_.addStringAnnotation(rootConcept, ns.getContentVersion().getNamespaceId() + "", ContentVersion.NAMESPACE_ID.getProperty().getUUID(), false);
 			conceptUtility_.addStringAnnotation(rootConcept, ns.getContentVersion().getReleaseDate().toString(), ContentVersion.RELEASE_DATE.getProperty().getUUID(),
 					false);
-			conceptUtility_.addStringAnnotation(rootConcept, loaderVersion, BaseContentVersion.LOADER_VERSION.getProperty().getUUID(), false);
-			conceptUtility_.addStringAnnotation(rootConcept, releaseVersion, BaseContentVersion.RELEASE.getProperty().getUUID(), false);
+			conceptUtility_.addStringAnnotation(rootConcept, loaderVersion, contentVersion_.LOADER_VERSION.getUUID(), false);
+			conceptUtility_.addStringAnnotation(rootConcept, releaseVersion, contentVersion_.RELEASE.getUUID(), false);
 
 			storeConcept(rootConcept);
 
