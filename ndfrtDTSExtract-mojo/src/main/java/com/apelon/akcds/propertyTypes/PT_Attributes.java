@@ -25,5 +25,6 @@ public class PT_Attributes extends BPT_Attributes
 		addProperty("MeSH_CUI");
 		addProperty("MeSH_DUI");
 		addProperty("SNOMED_CID");
+		addProperty("Value_Set");
 	}
 }
