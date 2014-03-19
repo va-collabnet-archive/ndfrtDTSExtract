@@ -5,17 +5,17 @@
 	<parent>
 		<groupId>gov.va.oia.terminology.converters</groupId>
 		<artifactId>ndfrtDTSExtract</artifactId>
-		<version>2.6</version>
+		<version>2.6.1</version>
 	</parent>
 
 	<artifactId>ndfrtDTSExtract-econcept</artifactId>
 	<packaging>pom</packaging>
 	<name>ndfrtDTSExtract-econcept</name>
 	<!-- this should be set to ${sourceData.version}-loader-${project.parent.version} but that doesn't appease the maven gods that know best.... -->
-	<version>2013.11.04.13AA-loader-2.6</version>
+	<version>2014.03.03.13AB-loader-2.6.1</version>
 
 	<properties>
-		<sourceData.version>2013.11.04.13AA</sourceData.version>
+		<sourceData.version>2014.03.03.13AB</sourceData.version>
 	</properties>
 
 	<build>
