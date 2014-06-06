@@ -12,10 +12,10 @@
 	<packaging>pom</packaging>
 	<name>ndfrtDTSExtract-econcept</name>
 	<!-- this should be set to ${sourceData.version}-loader-${project.parent.version} but that doesn't appease the maven gods that know best.... -->
-	<version>2014.03.03.13AB-loader-2.6.1</version>
+	<version>2014.06.02.13AB-loader-2.6.1</version>
 
 	<properties>
-		<sourceData.version>2014.03.03.13AB</sourceData.version>
+		<sourceData.version>2014.06.02.13AB</sourceData.version>
 	</properties>
 
 	<build>
