@@ -16,4 +16,6 @@
 #SCSS|77|216.47.173.20|3434|jcarter|carter1
 #SCSS|77|216.47.173.8|3535|vaakcds|va123!
 
-SCS|77|216.47.173.8|7171
+SCS|77|bolt.ext.apelon.com|7171
+
+#40.143.220.140

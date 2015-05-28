@@ -28,7 +28,7 @@ import org.ihtsdo.etypes.EConcept;
 import org.ihtsdo.tk.dto.concept.component.description.TkDescription;
 import org.ihtsdo.tk.dto.concept.component.refex.type_string.TkRefsetStrMember;
 import org.ihtsdo.tk.dto.concept.component.relationship.TkRelationship;
-import com.apelon.akcds.propertyTypes.PT_Attributes;
+import com.apelon.akcds.propertyTypes.PT_Annotations;
 import com.apelon.akcds.propertyTypes.PT_ContentVersion;
 import com.apelon.akcds.propertyTypes.PT_ContentVersion.ContentVersion;
 import com.apelon.akcds.propertyTypes.PT_Descriptions;
@@ -127,6 +127,7 @@ public class AllDTSToEConcepts extends AbstractMojo
 		ndfConverter.execute();
 	}
 
+	@Override
 	public void execute() throws MojoExecutionException
 	{
 		ConsoleUtil.println("NDFRT Processing Begins " + new Date().toString());
@@ -138,15 +139,23 @@ public class AllDTSToEConcepts extends AbstractMojo
 				outputDirectory.mkdirs();
 			}
 
+			// Connect to DTS
+			ConsoleUtil.println("Connecting to DTS server");
+			dbConn_ = new DbConn();
+			dbConn_.connectDTS(new File(new File(outputDirectory.getParentFile().getParentFile(), "conn"), "dts_conn_params.txt"));
+
+			Namespace ns = dbConn_.nameQuery.findNamespaceById(dbConn_.getNamespace());
+			ConsoleUtil.println("*** Connected to: " + dbConn_.toString() + " " + ns.toString() + " ***");
+			
 			File binaryOutputFile = new File(outputDirectory, "ndfrtEConcepts.jbin");
 			dos_ = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(binaryOutputFile)));
-			conceptUtility_ = new EConceptUtility(ndfrtNamespaceBaseSeed, "NDFRT Path", dos_);
+			conceptUtility_ = new EConceptUtility(ndfrtNamespaceBaseSeed, "NDFRT Path", dos_, ns.getContentVersion().getReleaseDate().getTime());
 			
 			// Want a specific handle to this one - adhoc usage.
 			contentVersion_ = new PT_ContentVersion();
 			
 			propertyTypes_.add(new PT_IDs());
-			propertyTypes_.add(new PT_Attributes());
+			propertyTypes_.add(new PT_Annotations());
 			propertyTypes_.add(new PT_Descriptions());
 			propertyTypes_.add(contentVersion_);
 			
@@ -156,13 +165,6 @@ public class AllDTSToEConcepts extends AbstractMojo
 			relQualifiers_ = new PT_RelationQualifier();
 			PT_Refsets refsets = new PT_Refsets();
 			propertyTypes_.add(refsets);
-
-			// Connect to DTS
-			dbConn_ = new DbConn();
-			dbConn_.connectDTS(new File(new File(outputDirectory.getParentFile().getParentFile(), "conn"), "dts_conn_params.txt"));
-
-			Namespace ns = dbConn_.nameQuery.findNamespaceById(dbConn_.getNamespace());
-			ConsoleUtil.println("*** Connected to: " + dbConn_.toString() + " " + ns.toString() + " ***");
 
 			ConsoleUtil.println("Loading Metadata");
 
@@ -246,7 +248,7 @@ public class AllDTSToEConcepts extends AbstractMojo
 
 			// this could be removed from final release. Just added to help debug editor problems.
 			ConsoleUtil.println("Dumping UUID Debug File");
-			ConverterUUID.dump(new File(outputDirectory, "uuidDebugMap.txt"));
+			ConverterUUID.dump(outputDirectory, "dtsExtract");
 
 			ConsoleUtil.println("NDFRT Processing Completes " + new Date().toString());
 			ConsoleUtil.writeOutputToFile(new File(outputDirectory, "ConsoleOutput.txt").toPath());

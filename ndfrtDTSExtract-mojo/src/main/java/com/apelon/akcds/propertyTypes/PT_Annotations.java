@@ -1,14 +1,14 @@
 package com.apelon.akcds.propertyTypes;
 
-import gov.va.oia.terminology.converters.sharedUtils.propertyTypes.BPT_Attributes;
+import gov.va.oia.terminology.converters.sharedUtils.propertyTypes.BPT_Annotations;
 
 /**
  * Properties from the DTS NDF data which should be expressed as concept attributes in the workbench.
  * @author Daniel Armbrust
  */
-public class PT_Attributes extends BPT_Attributes
+public class PT_Annotations extends BPT_Annotations
 {
-	public PT_Attributes()
+	public PT_Annotations()
 	{
 		super();
 		addProperty("Level");
@@ -26,5 +26,7 @@ public class PT_Attributes extends BPT_Attributes
 		addProperty("MeSH_DUI");
 		addProperty("SNOMED_CID");
 		addProperty("Value_Set");
+		addProperty("SNOMED_Parent_CID");
+		addProperty("SNOMED_Child_CID");
 	}
 }
