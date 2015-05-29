@@ -1,6 +1,7 @@
 package com.apelon.akcds;
 
 import gov.va.oia.terminology.converters.sharedUtils.ConsoleUtil;
+import gov.va.oia.terminology.converters.sharedUtils.ConverterBaseMojo;
 import gov.va.oia.terminology.converters.sharedUtils.EConceptUtility;
 import gov.va.oia.terminology.converters.sharedUtils.EConceptUtility.DescriptionType;
 import gov.va.oia.terminology.converters.sharedUtils.propertyTypes.BPT_Skip;
@@ -8,6 +9,7 @@ import gov.va.oia.terminology.converters.sharedUtils.propertyTypes.Property;
 import gov.va.oia.terminology.converters.sharedUtils.propertyTypes.PropertyType;
 import gov.va.oia.terminology.converters.sharedUtils.propertyTypes.ValuePropertyPair;
 import gov.va.oia.terminology.converters.sharedUtils.stats.ConverterUUID;
+
 import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -18,16 +20,20 @@ import java.util.Date;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.UUID;
+
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
 import org.dwfa.cement.ArchitectonicAuxiliary;
 import org.ihtsdo.etypes.EConcept;
 import org.ihtsdo.tk.dto.concept.component.description.TkDescription;
 import org.ihtsdo.tk.dto.concept.component.refex.type_string.TkRefsetStrMember;
 import org.ihtsdo.tk.dto.concept.component.relationship.TkRelationship;
+
 import com.apelon.akcds.propertyTypes.PT_Annotations;
 import com.apelon.akcds.propertyTypes.PT_ContentVersion;
 import com.apelon.akcds.propertyTypes.PT_ContentVersion.ContentVersion;
@@ -59,38 +65,10 @@ import com.apelon.dts.client.namespace.Namespace;
  * 
  * Paths are typically controlled by maven, however, the main() method has paths configured so that they
  * match what maven does for test purposes.
- * 
- * @goal convert-ndfrt-DTS-to-jbin
- * 
- * @phase process-sources
  */
-public class AllDTSToEConcepts extends AbstractMojo
+@Mojo( name = "convert-ndfrt-DTS-to-jbin", defaultPhase = LifecyclePhase.PROCESS_SOURCES )
+public class AllDTSToEConcepts extends ConverterBaseMojo
 {
-	/**
-	 * Location of the file.
-	 * 
-	 * @parameter expression="${project.build.directory}"
-	 * @required
-	 */
-	private File outputDirectory;
-
-	/**
-	 * Loader version number
-	 * Use parent because project.version pulls in the version of the data file, which I don't want.
-	 * 
-	 * @parameter expression="${project.parent.version}"
-	 * @required
-	 */
-	private String loaderVersion;
-
-	/**
-	 * Content version number
-	 * 
-	 * @parameter expression="${project.version}"
-	 * @required
-	 */
-	private String releaseVersion;
-
 	private DataOutputStream dos_;
 	private DbConn dbConn_;
 	private EConceptUtility conceptUtility_;
@@ -114,6 +92,8 @@ public class AllDTSToEConcepts extends AbstractMojo
 	private Hashtable<String, PropertyType> propertyToPropertyType_ = new Hashtable<String, PropertyType>();
 
 	private EConcept ndfrtRefsetConcept;
+	
+	private ArrayList<String> duplicateRoles_ = new ArrayList<>();
 
 	/**
 	 * Used for debug. Sets up the same paths that maven would use.... allow the code to be run standalone.
@@ -142,7 +122,7 @@ public class AllDTSToEConcepts extends AbstractMojo
 			// Connect to DTS
 			ConsoleUtil.println("Connecting to DTS server");
 			dbConn_ = new DbConn();
-			dbConn_.connectDTS(new File(new File(outputDirectory.getParentFile().getParentFile(), "conn"), "dts_conn_params.txt"));
+			dbConn_.connectDTS(inputFileLocation);
 
 			Namespace ns = dbConn_.nameQuery.findNamespaceById(dbConn_.getNamespace());
 			ConsoleUtil.println("*** Connected to: " + dbConn_.toString() + " " + ns.toString() + " ***");
@@ -217,7 +197,7 @@ public class AllDTSToEConcepts extends AbstractMojo
 			conceptUtility_.addStringAnnotation(rootConcept, ns.getContentVersion().getReleaseDate().toString(), ContentVersion.RELEASE_DATE.getProperty().getUUID(),
 					false);
 			conceptUtility_.addStringAnnotation(rootConcept, loaderVersion, contentVersion_.LOADER_VERSION.getUUID(), false);
-			conceptUtility_.addStringAnnotation(rootConcept, releaseVersion, contentVersion_.RELEASE.getUUID(), false);
+			conceptUtility_.addStringAnnotation(rootConcept, converterResultVersion, contentVersion_.RELEASE.getUUID(), false);
 
 			storeConcept(rootConcept);
 
@@ -249,6 +229,15 @@ public class AllDTSToEConcepts extends AbstractMojo
 			// this could be removed from final release. Just added to help debug editor problems.
 			ConsoleUtil.println("Dumping UUID Debug File");
 			ConverterUUID.dump(outputDirectory, "dtsExtract");
+			
+			if (duplicateRoles_.size() > 0)
+			{
+				ConsoleUtil.printErrorln("Duplicate roles were found (and ignored)");
+				for (String s : duplicateRoles_)
+				{
+					ConsoleUtil.println(s);
+				}
+			}
 
 			ConsoleUtil.println("NDFRT Processing Completes " + new Date().toString());
 			ConsoleUtil.writeOutputToFile(new File(outputDirectory, "ConsoleOutput.txt").toPath());
@@ -519,14 +508,39 @@ public class AllDTSToEConcepts extends AbstractMojo
 			{
 				for (DTSRole role : infRoles)
 				{
-					TkRelationship addedRelationship = conceptUtility_.addRelationship(concept, buildUUIDFromNUI(getNUIForName(role.getValueConcept().getName())),
-							relations_.getProperty(role.getName()).getUUID(), null);
-
+					UUID target = buildUUIDFromNUI(getNUIForName(role.getValueConcept().getName()));
+					UUID relType = relations_.getProperty(role.getName()).getUUID();
 					RoleModifier rm = role.getRoleModifier();
-					if (rm != null)
+					
+					UUID relUUID = null;
+					
+					try
 					{
-						// See notes in PT_RelationQualifier to understand why the API is used differently in this case.
-						conceptUtility_.addStringAnnotation(addedRelationship, rm.getName(), relQualifiers_.getPropertyTypeUUID(), false);
+						relUUID = ConverterUUID.createNamespaceUUIDFromStrings(concept.getPrimordialUuid().toString(), target.toString(), 
+							relType.toString(), (rm == null ? "" : rm.getName()));  //Need to use the role modifier in the  UUID generation to prevent dupes
+					}
+					catch (RuntimeException e)
+					{
+						if (e.toString().contains("duplicate UUID"))
+						{
+							duplicateRoles_.add(dtsConcept.getName() + "->" + role.getName() + "->" + role.getValueConcept().getName() + "::" 
+									+ (rm == null ? "no modifier" : rm.getName()));
+						}
+						else
+						{
+							throw e;
+						}
+					}
+					
+					if (relUUID != null)
+					{
+						TkRelationship addedRelationship = conceptUtility_.addRelationship(concept, relUUID, target, relType, null, null, null);
+	
+						if (rm != null)
+						{
+							// See notes in PT_RelationQualifier to understand why the API is used differently in this case.
+							conceptUtility_.addStringAnnotation(addedRelationship, rm.getName(), relQualifiers_.getPropertyTypeUUID(), false);
+						}
 					}
 				}
 			}

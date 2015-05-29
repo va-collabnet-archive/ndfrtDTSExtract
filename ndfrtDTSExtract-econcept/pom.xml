@@ -2,20 +2,18 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<parent>
-		<groupId>gov.va.oia.terminology.converters</groupId>
-		<artifactId>ndfrtDTSExtract</artifactId>
-		<version>2.6.1</version>
-	</parent>
 
+	<groupId>gov.va.oia.terminology.converters</groupId>
 	<artifactId>ndfrtDTSExtract-econcept</artifactId>
+	<!-- this should be set to ${sourceData.version}-loader-${loader.version>} but that doesn't appease the maven gods that know best.... -->
+	<version>2015.05.04.14AB-loader-3.0-SNAPSHOT</version>
+	
 	<packaging>pom</packaging>
 	<name>ndfrtDTSExtract-econcept</name>
-	<!-- this should be set to ${sourceData.version}-loader-${project.parent.version} but that doesn't appease the maven gods that know best.... -->
-	<version>2015.05.04.14AB-loader-2.6.1</version>
 
 	<properties>
 		<sourceData.version>2015.05.04.14AB</sourceData.version>
+		<loader.version>3.0-SNAPSHOT</loader.version>
 	</properties>
 
 	<build>
@@ -41,7 +39,7 @@
 			<plugin>
 				<groupId>${project.groupId}</groupId>
 				<artifactId>ndfrtDTSExtract-mojo</artifactId>
-				<version>${project.parent.version}</version>
+				<version>${loader.version}</version>
 				<executions>
 					<execution>
 						<id>genereate-jbin</id>
@@ -49,6 +47,9 @@
 							<goal>convert-ndfrt-DTS-to-jbin</goal>
 						</goals>
 						<phase>generate-resources</phase>
+						<configuration>
+							<inputFileLocation>${basedir}/resources/dts_conn_params.txt</inputFileLocation>
+						</configuration>
 					</execution>
 				</executions>
 			</plugin>
