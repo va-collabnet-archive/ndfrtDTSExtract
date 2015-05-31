@@ -27,7 +27,6 @@ import org.apache.log4j.Logger;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
-import org.apache.maven.plugins.annotations.Parameter;
 import org.dwfa.cement.ArchitectonicAuxiliary;
 import org.ihtsdo.etypes.EConcept;
 import org.ihtsdo.tk.dto.concept.component.description.TkDescription;
@@ -516,15 +515,17 @@ public class AllDTSToEConcepts extends ConverterBaseMojo
 					
 					try
 					{
+						//Need to use the role modifier in the  UUID generation to prevent dupes
 						relUUID = ConverterUUID.createNamespaceUUIDFromStrings(concept.getPrimordialUuid().toString(), target.toString(), 
-							relType.toString(), (rm == null ? "" : rm.getName()));  //Need to use the role modifier in the  UUID generation to prevent dupes
+							relType.toString(), (rm == null ? "" : rm.getName()), role.getGroupNum() + "");  
 					}
-					catch (RuntimeException e)
+					catch (RuntimeException e)  //still getting some dupes, not sure why.  skip.
 					{
 						if (e.toString().contains("duplicate UUID"))
 						{
 							duplicateRoles_.add(dtsConcept.getName() + "->" + role.getName() + "->" + role.getValueConcept().getName() + "::" 
-									+ (rm == null ? "no modifier" : rm.getName()));
+									+ (rm == null ? "no modifier" : rm.getName())
+									+ "::" + role.getGroupNum());
 						}
 						else
 						{
@@ -534,7 +535,7 @@ public class AllDTSToEConcepts extends ConverterBaseMojo
 					
 					if (relUUID != null)
 					{
-						TkRelationship addedRelationship = conceptUtility_.addRelationship(concept, relUUID, target, relType, null, null, null);
+						TkRelationship addedRelationship = conceptUtility_.addRelationship(concept, relUUID, target, relType, null, null, role.getGroupNum(), null);
 	
 						if (rm != null)
 						{
