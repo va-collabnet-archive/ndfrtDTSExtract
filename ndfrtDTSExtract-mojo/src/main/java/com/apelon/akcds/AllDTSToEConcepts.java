@@ -92,8 +92,6 @@ public class AllDTSToEConcepts extends ConverterBaseMojo
 
 	private EConcept ndfrtRefsetConcept;
 	
-	private ArrayList<String> duplicateRoles_ = new ArrayList<>();
-
 	/**
 	 * Used for debug. Sets up the same paths that maven would use.... allow the code to be run standalone.
 	 */
@@ -229,15 +227,6 @@ public class AllDTSToEConcepts extends ConverterBaseMojo
 			ConsoleUtil.println("Dumping UUID Debug File");
 			ConverterUUID.dump(outputDirectory, "dtsExtract");
 			
-			if (duplicateRoles_.size() > 0)
-			{
-				ConsoleUtil.printErrorln("Duplicate roles were found (and ignored)");
-				for (String s : duplicateRoles_)
-				{
-					ConsoleUtil.println(s);
-				}
-			}
-
 			ConsoleUtil.println("NDFRT Processing Completes " + new Date().toString());
 			ConsoleUtil.writeOutputToFile(new File(outputDirectory, "ConsoleOutput.txt").toPath());
 		}
@@ -511,37 +500,17 @@ public class AllDTSToEConcepts extends ConverterBaseMojo
 					UUID relType = relations_.getProperty(role.getName()).getUUID();
 					RoleModifier rm = role.getRoleModifier();
 					
-					UUID relUUID = null;
-					
-					try
-					{
-						//Need to use the role modifier in the  UUID generation to prevent dupes
-						relUUID = ConverterUUID.createNamespaceUUIDFromStrings(concept.getPrimordialUuid().toString(), target.toString(), 
+
+					//Need to use the role modifier in the  UUID generation to prevent dupes
+					UUID relUUID = ConverterUUID.createNamespaceUUIDFromStrings(concept.getPrimordialUuid().toString(), target.toString(), 
 							relType.toString(), (rm == null ? "" : rm.getName()), role.getGroupNum() + "");  
-					}
-					catch (RuntimeException e)  //still getting some dupes, not sure why.  skip.
-					{
-						if (e.toString().contains("duplicate UUID"))
-						{
-							duplicateRoles_.add(dtsConcept.getName() + "->" + role.getName() + "->" + role.getValueConcept().getName() + "::" 
-									+ (rm == null ? "no modifier" : rm.getName())
-									+ "::" + role.getGroupNum());
-						}
-						else
-						{
-							throw e;
-						}
-					}
 					
-					if (relUUID != null)
+					TkRelationship addedRelationship = conceptUtility_.addRelationship(concept, relUUID, target, relType, null, null, role.getGroupNum(), null);
+
+					if (rm != null)
 					{
-						TkRelationship addedRelationship = conceptUtility_.addRelationship(concept, relUUID, target, relType, null, null, role.getGroupNum(), null);
-	
-						if (rm != null)
-						{
-							// See notes in PT_RelationQualifier to understand why the API is used differently in this case.
-							conceptUtility_.addStringAnnotation(addedRelationship, rm.getName(), relQualifiers_.getPropertyTypeUUID(), false);
-						}
+						// See notes in PT_RelationQualifier to understand why the API is used differently in this case.
+						conceptUtility_.addStringAnnotation(addedRelationship, rm.getName(), relQualifiers_.getPropertyTypeUUID(), false);
 					}
 				}
 			}
